@@ -1,4 +1,4 @@
-package tokenGenerator
+package tokengenerator
 
 type tokenGenerator struct {
 }
