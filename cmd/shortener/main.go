@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	ErrUrlNotFound = errors.New("url is not found")
+	ErrURLNotFound = errors.New("url is not found")
 )
 
 type localStorage map[string]string
@@ -32,7 +32,7 @@ func (s localStorage) get(token string) (string, error) {
 		return url, nil
 	}
 
-	return "", ErrUrlNotFound
+	return "", ErrURLNotFound
 }
 
 func main() {
