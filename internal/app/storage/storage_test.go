@@ -8,23 +8,23 @@ import (
 
 const (
 	testToken = "test_token"
-	testUrl   = "test_url"
+	testURL   = "test_url"
 )
 
 func TestAdd(t *testing.T) {
 	storage := NewLocalStorage()
-	err := storage.Add(testToken, testUrl)
+	err := storage.Add(testToken, testURL)
 
 	require.NoError(t, err)
-	assert.Equal(t, localStorage{testToken: testUrl}, *storage)
+	assert.Equal(t, localStorage{testToken: testURL}, *storage)
 }
 
 func TestGetFound(t *testing.T) {
-	storage := localStorage{testToken: testUrl}
+	storage := localStorage{testToken: testURL}
 	url, err := storage.Get(testToken)
 
 	require.NoError(t, err)
-	assert.Equal(t, testUrl, url)
+	assert.Equal(t, testURL, url)
 }
 
 func TestGetNotFound(t *testing.T) {

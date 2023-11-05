@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/token_generator"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokenGenerator"
 	"net/http"
 )
 
@@ -13,7 +13,7 @@ const (
 
 func main() {
 	localStorage := storage.NewLocalStorage()
-	tokenGenerator := token_generator.New()
+	tokenGenerator := tokenGenerator.New()
 
 	mux := http.NewServeMux()
 

@@ -13,7 +13,7 @@ import (
 const (
 	addr            = "localhost:8080"
 	defaultToken    = "default_test_token"
-	defaultSavedUrl = "default_saved_url"
+	defaultSavedURL = "default_saved_url"
 )
 
 type mockRepo struct {
@@ -113,12 +113,12 @@ func Test_handler_get(t *testing.T) {
 	}{
 		{
 			name:   "success",
-			repo:   mockRepo{url: defaultSavedUrl},
+			repo:   mockRepo{url: defaultSavedURL},
 			method: http.MethodGet,
 			path:   fmt.Sprintf("/%s", defaultToken),
 			want: want{
 				code:           http.StatusTemporaryRedirect,
-				locationHeader: defaultSavedUrl,
+				locationHeader: defaultSavedURL,
 			},
 		},
 		{
