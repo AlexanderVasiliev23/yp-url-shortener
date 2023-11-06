@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/config"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/add"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/get"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
@@ -9,20 +11,19 @@ import (
 	"net/http"
 )
 
-const (
-	addr = "localhost:8080"
-)
-
 func main() {
+	conf := config.Configure()
+
 	localStorage := storage.NewLocalStorage()
 	tokenGenerator := tokengenerator.New()
 
 	e := echo.New()
 
-	e.POST("/", add.Add(localStorage, tokenGenerator, addr))
+	e.POST("/", add.Add(localStorage, tokenGenerator, conf.BaseAddress))
 	e.GET("/:token", get.Get(localStorage))
 
-	if err := http.ListenAndServe(addr, e); err != nil {
+	fmt.Println("Server is running on", conf.Addr)
+	if err := http.ListenAndServe(conf.Addr, e); err != nil {
 		panic(err)
 	}
 }
