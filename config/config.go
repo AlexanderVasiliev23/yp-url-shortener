@@ -11,7 +11,7 @@ func Configure() Config {
 	conf := Config{}
 
 	flag.StringVar(&conf.Addr, "a", ":8080", "server address")
-	flag.StringVar(&conf.BaseAddress, "b", "localhost:8080", "base address for short url")
+	flag.StringVar(&conf.BaseAddress, "b", "http://localhost:8080", "base address for short url")
 
 	flag.Parse()
 
