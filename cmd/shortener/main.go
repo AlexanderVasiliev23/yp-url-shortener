@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/add"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/get"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
@@ -15,13 +17,12 @@ func main() {
 	localStorage := storage.NewLocalStorage()
 	tokenGenerator := tokengenerator.New()
 
-	mux := http.NewServeMux()
+	e := echo.New()
 
-	handler := handlers.NewHandler(localStorage, tokenGenerator, addr)
+	e.POST("/", add.Add(localStorage, tokenGenerator, addr))
+	e.GET("/:token", get.Get(localStorage))
 
-	mux.HandleFunc("/", handler.Handle)
-
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, e); err != nil {
 		panic(err)
 	}
 }
