@@ -30,7 +30,7 @@ func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo
 		}
 
 		c.Response().WriteHeader(http.StatusCreated)
-		_, _ = fmt.Fprintf(c.Response(), "http://%s/%s", addr, token)
+		_, _ = fmt.Fprintf(c.Response(), "%s/%s", addr, token)
 
 		return nil
 	}

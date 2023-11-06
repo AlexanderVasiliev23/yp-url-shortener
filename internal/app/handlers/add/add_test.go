@@ -53,7 +53,7 @@ func TestAdd(t *testing.T) {
 			body:   "test_url",
 			want: want{
 				code: http.StatusCreated,
-				body: fmt.Sprintf("http://%s/%s", addr, defaultToken),
+				body: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
 		},
 		{
