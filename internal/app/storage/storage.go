@@ -6,20 +6,20 @@ var (
 	ErrURLNotFound = errors.New("url is not found")
 )
 
-type localStorage map[string]string
+type LocalStorage map[string]string
 
-func NewLocalStorage() *localStorage {
-	s := make(localStorage)
+func NewLocalStorage() *LocalStorage {
+	s := make(LocalStorage)
 	return &s
 }
 
-func (s localStorage) Add(token, url string) error {
+func (s LocalStorage) Add(token, url string) error {
 	s[token] = url
 
 	return nil
 }
 
-func (s localStorage) Get(token string) (string, error) {
+func (s LocalStorage) Get(token string) (string, error) {
 	url, ok := s[token]
 	if ok {
 		return url, nil

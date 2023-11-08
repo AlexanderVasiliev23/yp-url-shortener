@@ -1,30 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"log"
 
-	"github.com/AlexanderVasiliev23/yp-url-shortener/config"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/add"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/get"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
-	"github.com/labstack/echo/v4"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/configs"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app"
 )
 
 func main() {
-	conf := config.Configure()
+	conf := configs.Configure()
 
-	localStorage := storage.NewLocalStorage()
-	tokenGenerator := tokengenerator.New()
+	application := app.New(conf)
 
-	e := echo.New()
-
-	e.POST("/", add.Add(localStorage, tokenGenerator, conf.BaseAddress))
-	e.GET("/:token", get.Get(localStorage))
-
-	fmt.Println("Server is running on", conf.Addr)
-	if err := http.ListenAndServe(conf.Addr, e); err != nil {
-		panic(err)
+	if err := application.Run(); err != nil {
+		log.Fatalln(err)
 	}
 }
