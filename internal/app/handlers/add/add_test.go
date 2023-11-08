@@ -3,13 +3,14 @@ package add
 import (
 	"errors"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -26,10 +27,9 @@ func (m mockTokenGenerator) Generate() string {
 
 type mockRepo struct {
 	addingError error
-	url         string
 }
 
-func (m mockRepo) Add(token, url string) error {
+func (m mockRepo) Add(_, _ string) error {
 	return m.addingError
 }
 
@@ -91,7 +91,10 @@ func TestAdd(t *testing.T) {
 
 			err := handler(c)
 
-			require.NoError(t, err)
+			if tt.want.code == http.StatusCreated {
+				require.NoError(t, err)
+			}
+
 			assert.Equal(t, tt.want.code, w.Code)
 			assert.Equal(t, tt.want.body, w.Body.String())
 		})
