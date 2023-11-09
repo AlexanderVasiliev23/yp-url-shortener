@@ -2,9 +2,10 @@ package add
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type repository interface {
@@ -12,7 +13,7 @@ type repository interface {
 }
 
 type tokenGenerator interface {
-	Generate() string
+	Generate() (string, error)
 }
 
 func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo.HandlerFunc {
@@ -23,7 +24,12 @@ func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo
 			return nil
 		}
 
-		token := tokenGenerator.Generate()
+		token, err := tokenGenerator.Generate()
+		if err != nil {
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return nil
+		}
+
 		if err := repository.Add(token, string(url)); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return nil

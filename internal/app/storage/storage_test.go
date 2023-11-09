@@ -1,9 +1,10 @@
 package storage
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 const (
@@ -16,11 +17,11 @@ func TestAdd(t *testing.T) {
 	err := storage.Add(testToken, testURL)
 
 	require.NoError(t, err)
-	assert.Equal(t, localStorage{testToken: testURL}, *storage)
+	assert.Equal(t, LocalStorage{testToken: testURL}, *storage)
 }
 
 func TestGetFound(t *testing.T) {
-	storage := localStorage{testToken: testURL}
+	storage := LocalStorage{testToken: testURL}
 	url, err := storage.Get(testToken)
 
 	require.NoError(t, err)
