@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/AlexanderVasiliev23/yp-url-shortener/configs"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
 )
 
 func main() {

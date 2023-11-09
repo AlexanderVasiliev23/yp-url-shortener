@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/AlexanderVasiliev23/yp-url-shortener/configs"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
 	"github.com/labstack/echo/v4"
