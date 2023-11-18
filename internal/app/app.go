@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
@@ -10,17 +11,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type app struct {
+type App struct {
 	conf           *configs.Config
 	localStorage   *storage.LocalStorage
 	tokenGenerator *tokengenerator.TokenGenerator
 	router         *echo.Echo
+	logger         *zap.SugaredLogger
 }
 
-func New(conf *configs.Config) *app {
-	a := new(app)
+func New(conf *configs.Config, logger *zap.SugaredLogger) *App {
+	a := new(App)
 
 	a.conf = conf
+	a.logger = logger
 	a.localStorage = storage.NewLocalStorage()
 	a.tokenGenerator = tokengenerator.New(conf.TokenLen)
 	a.router = a.configureRouter()
@@ -28,8 +31,8 @@ func New(conf *configs.Config) *app {
 	return a
 }
 
-func (a *app) Run() error {
-	fmt.Println("Server is running on", a.conf.Addr)
+func (a *App) Run() error {
+	a.logger.Infof("Server is running on %s", a.conf.Addr)
 
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 }
