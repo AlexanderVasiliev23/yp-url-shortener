@@ -3,6 +3,7 @@ package shorten
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -19,7 +20,7 @@ type tokenGenerator interface {
 	Generate() (string, error)
 }
 
-func Shorten(repository repository, tokenGenerator tokenGenerator) echo.HandlerFunc {
+func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := struct {
 			URL string
@@ -49,7 +50,7 @@ func Shorten(repository repository, tokenGenerator tokenGenerator) echo.HandlerF
 		resp := struct {
 			Result string `json:"result"`
 		}{
-			Result: token,
+			Result: fmt.Sprintf("%s/%s", addr, token),
 		}
 
 		c.Response().Header().Set("Content-Type", "application/json")

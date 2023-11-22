@@ -15,7 +15,7 @@ func (a *App) configureRouter() *echo.Echo {
 
 	e.POST("/", add.Add(a.localStorage, a.tokenGenerator, a.conf.BaseAddress))
 	e.GET("/:token", get.Get(a.localStorage))
-	e.POST("/api/shorten", shorten.Shorten(a.localStorage, a.tokenGenerator))
+	e.POST("/api/shorten", shorten.Shorten(a.localStorage, a.tokenGenerator, a.conf.BaseAddress))
 
 	return e
 }

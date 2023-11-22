@@ -14,6 +14,7 @@ import (
 const (
 	path         = "/api/shorten"
 	defaultToken = "test_token"
+	addr         = "localhost:8080"
 )
 
 var (
@@ -65,7 +66,7 @@ func TestShorten(t *testing.T) {
 			},
 			want: want{
 				code: http.StatusCreated,
-				body: fmt.Sprintf("{\"result\":\"%s\"}\n", defaultToken),
+				body: fmt.Sprintf("{\"result\":\"%s/%s\"}\n", addr, defaultToken),
 			},
 			tokenGenerator: tokenGeneratorMock{token: defaultToken},
 			repository:     repositoryMock{err: nil},
@@ -128,7 +129,7 @@ func TestShorten(t *testing.T) {
 			r := httptest.NewRequest(tc.request.method, path, strings.NewReader(tc.request.body))
 			w := httptest.NewRecorder()
 
-			h := Shorten(tc.repository, tc.tokenGenerator)
+			h := Shorten(tc.repository, tc.tokenGenerator, addr)
 
 			e := echo.New()
 			c := e.NewContext(r, w)
