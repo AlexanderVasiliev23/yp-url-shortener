@@ -22,7 +22,7 @@ type tokenGenerator interface {
 func Shorten(repository repository, tokenGenerator tokenGenerator) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := struct {
-			Url string
+			URL string
 		}{}
 
 		if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
@@ -30,7 +30,7 @@ func Shorten(repository repository, tokenGenerator tokenGenerator) echo.HandlerF
 			return err
 		}
 
-		if req.Url == "" {
+		if req.URL == "" {
 			c.Response().WriteHeader(http.StatusBadRequest)
 			return ErrURLIsEmpty
 		}
@@ -41,7 +41,7 @@ func Shorten(repository repository, tokenGenerator tokenGenerator) echo.HandlerF
 			return err
 		}
 
-		if err := repository.Add(token, req.Url); err != nil {
+		if err := repository.Add(token, req.URL); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
