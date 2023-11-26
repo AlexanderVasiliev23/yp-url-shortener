@@ -15,7 +15,7 @@ type Storage struct {
 }
 
 type record struct {
-	Uuid        string `json:"uuid"`
+	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
@@ -26,7 +26,7 @@ func New(file *os.File) *Storage {
 
 func (s Storage) Add(token, url string) error {
 	record := record{
-		Uuid:        uuid.NewString(),
+		UUID:        uuid.NewString(),
 		ShortURL:    token,
 		OriginalURL: url,
 	}
