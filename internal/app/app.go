@@ -13,7 +13,7 @@ import (
 
 type App struct {
 	conf           *configs.Config
-	localStorage   *storage.LocalStorage
+	storage        storage.Storage
 	tokenGenerator *tokengenerator.TokenGenerator
 	router         *echo.Echo
 	logger         *zap.SugaredLogger
@@ -22,9 +22,14 @@ type App struct {
 func New(conf *configs.Config, logger *zap.SugaredLogger) *App {
 	a := new(App)
 
+	_storage, err := storage.New(conf.StorageFilePath)
+	if err != nil {
+		logger.Fatalln("failed to create storage", err.Error())
+	}
+	a.storage = _storage
+
 	a.conf = conf
 	a.logger = logger
-	a.localStorage = storage.NewLocalStorage()
 	a.tokenGenerator = tokengenerator.New(conf.TokenLen)
 	a.router = a.configureRouter()
 

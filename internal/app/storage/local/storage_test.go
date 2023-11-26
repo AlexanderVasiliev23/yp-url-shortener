@@ -1,6 +1,7 @@
-package storage
+package local
 
 import (
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storage_errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,25 +14,25 @@ const (
 )
 
 func TestAdd(t *testing.T) {
-	storage := NewLocalStorage()
-	err := storage.Add(testToken, testURL)
+	s := New()
+	err := s.Add(testToken, testURL)
 
 	require.NoError(t, err)
-	assert.Equal(t, LocalStorage{testToken: testURL}, *storage)
+	assert.Equal(t, Storage{testToken: testURL}, *s)
 }
 
 func TestGetFound(t *testing.T) {
-	storage := LocalStorage{testToken: testURL}
-	url, err := storage.Get(testToken)
+	s := Storage{testToken: testURL}
+	url, err := s.Get(testToken)
 
 	require.NoError(t, err)
 	assert.Equal(t, testURL, url)
 }
 
 func TestGetNotFound(t *testing.T) {
-	storage := NewLocalStorage()
-	url, err := storage.Get(testToken)
+	s := New()
+	url, err := s.Get(testToken)
 
-	assert.ErrorIs(t, err, ErrURLNotFound)
+	assert.ErrorIs(t, err, storage_errors.ErrURLNotFound)
 	assert.Equal(t, "", url)
 }

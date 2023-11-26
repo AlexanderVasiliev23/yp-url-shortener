@@ -1,29 +1,26 @@
 package storage
 
-import "errors"
-
-var (
-	ErrURLNotFound = errors.New("url is not found")
+import (
+	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/file"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
+	"os"
 )
 
-type LocalStorage map[string]string
-
-func NewLocalStorage() *LocalStorage {
-	s := make(LocalStorage)
-	return &s
+type Storage interface {
+	Add(token, url string) error
+	Get(token string) (string, error)
 }
 
-func (s LocalStorage) Add(token, url string) error {
-	s[token] = url
-
-	return nil
-}
-
-func (s LocalStorage) Get(token string) (string, error) {
-	url, ok := s[token]
-	if ok {
-		return url, nil
+func New(storageFilePath string) (Storage, error) {
+	if storageFilePath == "" {
+		return local.New(), nil
 	}
 
-	return "", ErrURLNotFound
+	f, err := os.OpenFile(storageFilePath, os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("can't open storage file: %w", err)
+	}
+
+	return file.New(f), nil
 }
