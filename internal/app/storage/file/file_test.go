@@ -25,8 +25,6 @@ func TestFileStorage(t *testing.T) {
 	assert.Equal(t, "", url)
 
 	err = storage.Add(defaultToken, defaultURL)
-	err = storage.Add(defaultToken, defaultURL)
-	err = storage.Add(defaultToken, defaultURL)
 	require.NoError(t, err)
 
 	url, err = storage.Get(defaultToken)
