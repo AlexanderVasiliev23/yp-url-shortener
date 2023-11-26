@@ -1,8 +1,6 @@
 package local
 
-import (
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storage_errors"
-)
+import "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storageerrors"
 
 type Storage map[string]string
 
@@ -23,5 +21,5 @@ func (s Storage) Get(token string) (string, error) {
 		return url, nil
 	}
 
-	return "", storage_errors.ErrURLNotFound
+	return "", storageerrors.ErrURLNotFound
 }

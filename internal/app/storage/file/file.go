@@ -3,7 +3,7 @@ package file
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storage_errors"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storageerrors"
 	"github.com/google/uuid"
 	"io"
 	"os"
@@ -55,5 +55,5 @@ func (s Storage) Get(token string) (string, error) {
 		return record.OriginalURL, nil
 	}
 
-	return "", storage_errors.ErrURLNotFound
+	return "", storageerrors.ErrURLNotFound
 }

@@ -1,7 +1,7 @@
 package file
 
 import (
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storage_errors"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storageerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -21,7 +21,7 @@ func TestFileStorage(t *testing.T) {
 	storage := New(file)
 
 	url, err := storage.Get(defaultToken)
-	assert.Error(t, storage_errors.ErrURLNotFound, err)
+	assert.Error(t, storageerrors.ErrURLNotFound, err)
 	assert.Equal(t, "", url)
 
 	err = storage.Add(defaultToken, defaultURL)

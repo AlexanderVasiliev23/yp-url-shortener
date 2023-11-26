@@ -1,7 +1,7 @@
 package get
 
 import (
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storage_errors"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storageerrors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -50,7 +50,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			name:   "token not found in repo",
-			repo:   mockRepo{err: storage_errors.ErrURLNotFound},
+			repo:   mockRepo{err: storageerrors.ErrURLNotFound},
 			method: http.MethodGet,
 			token:  defaultToken,
 			want:   want{code: http.StatusBadRequest},
