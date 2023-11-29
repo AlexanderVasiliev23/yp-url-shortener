@@ -36,7 +36,7 @@ func (m mockStorage) Get(token string) (string, error) {
 }
 
 func TestStorage_RecoveringFromFileSuccess(t *testing.T) {
-	defer assert.NoError(t, os.Remove(testStorageFilePath))
+	defer os.Remove(testStorageFilePath)
 
 	token := "mbQTUSzkAa"
 	URL := "https://ya.ru"
@@ -53,7 +53,7 @@ func TestStorage_RecoveringFromFileSuccess(t *testing.T) {
 }
 
 func TestStorage_RecoveringFromFileFailed(t *testing.T) {
-	defer assert.NoError(t, os.Remove(testStorageFilePath))
+	defer os.Remove(testStorageFilePath)
 
 	err := os.WriteFile(testStorageFilePath, []byte(`{"wrong":"data"}`+"\n"), os.ModePerm)
 	require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestStorage_RecoveringFromFileFailed(t *testing.T) {
 }
 
 func TestStorage_BufferSizeEqualsZero(t *testing.T) {
-	defer assert.NoError(t, os.Remove(testStorageFilePath))
+	defer os.Remove(testStorageFilePath)
 
 	s, err := New(mockStorage{make(map[string]string)}, testStorageFilePath, 0)
 	require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestStorage_BufferSizeEqualsZero(t *testing.T) {
 }
 
 func TestStorage_BufferSizeEqualsOne(t *testing.T) {
-	defer assert.NoError(t, os.Remove(testStorageFilePath))
+	defer os.Remove(testStorageFilePath)
 
 	s, err := New(mockStorage{make(map[string]string)}, testStorageFilePath, 1)
 	require.NoError(t, err)
