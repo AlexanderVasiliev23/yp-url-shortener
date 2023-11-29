@@ -6,15 +6,17 @@ import (
 )
 
 const (
-	defaultTokenLen        = 10
-	defaultStorageFilePath = "/tmp/short-url-db.json"
+	defaultTokenLen              = 10
+	defaultStorageFilePath       = "/tmp/short-url-db.json"
+	defaultFileStorageBufferSize = 10
 )
 
 type Config struct {
-	Addr            string
-	BaseAddress     string
-	TokenLen        int
-	StorageFilePath string
+	Addr                  string
+	BaseAddress           string
+	TokenLen              int
+	StorageFilePath       string
+	FileStorageBufferSize int
 }
 
 func Configure() *Config {
@@ -24,6 +26,7 @@ func Configure() *Config {
 	flag.StringVar(&conf.BaseAddress, "b", "http://localhost:8080", "base address for short url")
 	flag.IntVar(&conf.TokenLen, "token-len", defaultTokenLen, "length of a token")
 	flag.StringVar(&conf.StorageFilePath, "f", defaultStorageFilePath, "storage file path")
+	flag.IntVar(&conf.FileStorageBufferSize, "file-storage-buffer-size", defaultFileStorageBufferSize, "size of file storage buffer")
 
 	flag.Parse()
 

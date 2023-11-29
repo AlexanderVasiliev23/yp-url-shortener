@@ -3,6 +3,8 @@ package app
 import (
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/filestoragedecorator"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"net/http"
 
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
@@ -21,11 +23,15 @@ type App struct {
 func New(conf *configs.Config) *App {
 	a := new(App)
 
-	_storage, err := storage.New(conf.StorageFilePath)
-	if err != nil {
-		logger.Log.Fatalln("failed to create storage", err.Error())
+	if conf.StorageFilePath == "" {
+		a.storage = local.New()
+	} else {
+		s, err := filestoragedecorator.New(local.New(), conf.StorageFilePath, conf.FileStorageBufferSize)
+		if err != nil {
+			logger.Log.Fatalln("failed to create storage", err.Error())
+		}
+		a.storage = s
 	}
-	a.storage = _storage
 
 	a.conf = conf
 	a.tokenGenerator = tokengenerator.New(conf.TokenLen)
@@ -38,4 +44,15 @@ func (a *App) Run() error {
 	logger.Log.Infof("Server is running on %s", a.conf.Addr)
 
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
+}
+
+func (a *App) Shutdown() error {
+	s, ok := a.storage.(*filestoragedecorator.Storage)
+	if ok {
+		if err := s.Dump(); err != nil {
+			return fmt.Errorf("dump file storage on closing: %w", err)
+		}
+	}
+
+	return nil
 }

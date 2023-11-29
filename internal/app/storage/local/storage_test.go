@@ -1,7 +1,6 @@
 package local
 
 import (
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/storageerrors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,6 +32,6 @@ func TestGetNotFound(t *testing.T) {
 	s := New()
 	url, err := s.Get(testToken)
 
-	assert.ErrorIs(t, err, storageerrors.ErrURLNotFound)
+	assert.ErrorIs(t, err, ErrURLNotFound)
 	assert.Equal(t, "", url)
 }
