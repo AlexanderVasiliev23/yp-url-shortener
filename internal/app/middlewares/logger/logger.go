@@ -1,12 +1,12 @@
 package logger
 
 import (
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 	"time"
 )
 
-func Middleware(logger *zap.SugaredLogger) echo.MiddlewareFunc {
+func Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			start := time.Now()
@@ -15,7 +15,7 @@ func Middleware(logger *zap.SugaredLogger) echo.MiddlewareFunc {
 
 			duration := time.Since(start)
 
-			logger.Infow(
+			logger.Log.Infow(
 				"request handled",
 				"method", c.Request().Method,
 				"uri", c.Request().RequestURI,

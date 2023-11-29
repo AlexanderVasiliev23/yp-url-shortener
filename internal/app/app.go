@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"go.uber.org/zap"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"net/http"
 
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
@@ -16,20 +16,18 @@ type App struct {
 	storage        storage.Storage
 	tokenGenerator *tokengenerator.TokenGenerator
 	router         *echo.Echo
-	logger         *zap.SugaredLogger
 }
 
-func New(conf *configs.Config, logger *zap.SugaredLogger) *App {
+func New(conf *configs.Config) *App {
 	a := new(App)
 
 	_storage, err := storage.New(conf.StorageFilePath)
 	if err != nil {
-		logger.Fatalln("failed to create storage", err.Error())
+		logger.Log.Fatalln("failed to create storage", err.Error())
 	}
 	a.storage = _storage
 
 	a.conf = conf
-	a.logger = logger
 	a.tokenGenerator = tokengenerator.New(conf.TokenLen)
 	a.router = a.configureRouter()
 
@@ -37,7 +35,7 @@ func New(conf *configs.Config, logger *zap.SugaredLogger) *App {
 }
 
 func (a *App) Run() error {
-	a.logger.Infof("Server is running on %s", a.conf.Addr)
+	logger.Log.Infof("Server is running on %s", a.conf.Addr)
 
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 }

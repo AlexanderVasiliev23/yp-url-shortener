@@ -12,7 +12,7 @@ import (
 func (a *App) configureRouter() *echo.Echo {
 	e := echo.New()
 
-	e.Use(logger.Middleware(a.logger))
+	e.Use(logger.Middleware())
 	e.Use(gzip.Middleware())
 
 	e.POST("/", add.Add(a.storage, a.tokenGenerator, a.conf.BaseAddress))
