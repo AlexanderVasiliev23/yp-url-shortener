@@ -1,4 +1,4 @@
-package storage
+package local
 
 import (
 	"testing"
@@ -13,24 +13,24 @@ const (
 )
 
 func TestAdd(t *testing.T) {
-	storage := NewLocalStorage()
-	err := storage.Add(testToken, testURL)
+	s := New()
+	err := s.Add(testToken, testURL)
 
 	require.NoError(t, err)
-	assert.Equal(t, LocalStorage{testToken: testURL}, *storage)
+	assert.Equal(t, Storage{testToken: testURL}, *s)
 }
 
 func TestGetFound(t *testing.T) {
-	storage := LocalStorage{testToken: testURL}
-	url, err := storage.Get(testToken)
+	s := Storage{testToken: testURL}
+	url, err := s.Get(testToken)
 
 	require.NoError(t, err)
 	assert.Equal(t, testURL, url)
 }
 
 func TestGetNotFound(t *testing.T) {
-	storage := NewLocalStorage()
-	url, err := storage.Get(testToken)
+	s := New()
+	url, err := s.Get(testToken)
 
 	assert.ErrorIs(t, err, ErrURLNotFound)
 	assert.Equal(t, "", url)

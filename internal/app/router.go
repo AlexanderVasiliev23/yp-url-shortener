@@ -12,12 +12,14 @@ import (
 func (a *App) configureRouter() *echo.Echo {
 	e := echo.New()
 
-	e.Use(logger.Middleware(a.logger))
-	e.Use(gzip.Middleware())
+	e.Use(
+		logger.Middleware(),
+		gzip.Middleware(),
+	)
 
-	e.POST("/", add.Add(a.localStorage, a.tokenGenerator, a.conf.BaseAddress))
-	e.GET("/:token", get.Get(a.localStorage))
-	e.POST("/api/shorten", shorten.Shorten(a.localStorage, a.tokenGenerator, a.conf.BaseAddress))
+	e.POST("/", add.Add(a.storage, a.tokenGenerator, a.conf.BaseAddress))
+	e.GET("/:token", get.Get(a.storage))
+	e.POST("/api/shorten", shorten.Shorten(a.storage, a.tokenGenerator, a.conf.BaseAddress))
 
 	return e
 }

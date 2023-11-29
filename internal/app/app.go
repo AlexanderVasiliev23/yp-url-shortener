@@ -2,7 +2,9 @@ package app
 
 import (
 	"fmt"
-	"go.uber.org/zap"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/dumper"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"net/http"
 
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
@@ -13,18 +15,25 @@ import (
 
 type App struct {
 	conf           *configs.Config
-	localStorage   *storage.LocalStorage
+	storage        storage.Storage
 	tokenGenerator *tokengenerator.TokenGenerator
 	router         *echo.Echo
-	logger         *zap.SugaredLogger
 }
 
-func New(conf *configs.Config, logger *zap.SugaredLogger) *App {
+func New(conf *configs.Config) *App {
 	a := new(App)
 
+	if conf.StorageFilePath == "" {
+		a.storage = local.New()
+	} else {
+		s, err := dumper.New(local.New(), conf.StorageFilePath, conf.FileStorageBufferSize)
+		if err != nil {
+			logger.Log.Fatalln("failed to create storage", err.Error())
+		}
+		a.storage = s
+	}
+
 	a.conf = conf
-	a.logger = logger
-	a.localStorage = storage.NewLocalStorage()
 	a.tokenGenerator = tokengenerator.New(conf.TokenLen)
 	a.router = a.configureRouter()
 
@@ -32,7 +41,18 @@ func New(conf *configs.Config, logger *zap.SugaredLogger) *App {
 }
 
 func (a *App) Run() error {
-	a.logger.Infof("Server is running on %s", a.conf.Addr)
+	logger.Log.Infof("Server is running on %s", a.conf.Addr)
 
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
+}
+
+func (a *App) Shutdown() error {
+	s, ok := a.storage.(*dumper.Storage)
+	if ok {
+		if err := s.Dump(); err != nil {
+			return fmt.Errorf("dump file storage on closing: %w", err)
+		}
+	}
+
+	return nil
 }
