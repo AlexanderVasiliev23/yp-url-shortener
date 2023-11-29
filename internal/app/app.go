@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/filestoragedecorator"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/dumper"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"net/http"
 
@@ -26,7 +26,7 @@ func New(conf *configs.Config) *App {
 	if conf.StorageFilePath == "" {
 		a.storage = local.New()
 	} else {
-		s, err := filestoragedecorator.New(local.New(), conf.StorageFilePath, conf.FileStorageBufferSize)
+		s, err := dumper.New(local.New(), conf.StorageFilePath, conf.FileStorageBufferSize)
 		if err != nil {
 			logger.Log.Fatalln("failed to create storage", err.Error())
 		}
@@ -47,7 +47,7 @@ func (a *App) Run() error {
 }
 
 func (a *App) Shutdown() error {
-	s, ok := a.storage.(*filestoragedecorator.Storage)
+	s, ok := a.storage.(*dumper.Storage)
 	if ok {
 		if err := s.Dump(); err != nil {
 			return fmt.Errorf("dump file storage on closing: %w", err)

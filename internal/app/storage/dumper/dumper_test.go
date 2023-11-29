@@ -1,4 +1,4 @@
-package filestoragedecorator
+package dumper
 
 import (
 	"bufio"
