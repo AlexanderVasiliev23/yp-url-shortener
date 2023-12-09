@@ -8,6 +8,11 @@ import (
 
 func Ping(dbConn *pgx.Conn) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		if dbConn == nil {
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return nil
+		}
+
 		if err := dbConn.Ping(c.Request().Context()); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return nil

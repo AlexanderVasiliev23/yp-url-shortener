@@ -25,11 +25,13 @@ type App struct {
 func New(conf *configs.Config) *App {
 	a := new(App)
 
-	conn, err := pgx.Connect(context.Background(), conf.DatabaseDSN)
-	if err != nil {
-		logger.Log.Fatalln("connect to db: ", err.Error())
+	if conf.DatabaseDSN != "" {
+		conn, err := pgx.Connect(context.Background(), conf.DatabaseDSN)
+		if err != nil {
+			logger.Log.Fatalln("connect to db: ", err.Error())
+		}
+		a.dbConn = conn
 	}
-	a.dbConn = conn
 
 	if conf.StorageFilePath == "" {
 		a.storage = local.New()
