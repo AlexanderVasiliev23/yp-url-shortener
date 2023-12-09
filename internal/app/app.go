@@ -1,11 +1,14 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/dumper"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
+	"github.com/jackc/pgx/v5"
 	"net/http"
+	"os"
 
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
@@ -18,10 +21,17 @@ type App struct {
 	storage        storage.Storage
 	tokenGenerator *tokengenerator.TokenGenerator
 	router         *echo.Echo
+	dbConn         *pgx.Conn
 }
 
 func New(conf *configs.Config) *App {
 	a := new(App)
+
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	if err != nil {
+		logger.Log.Fatalln("connect to db: ", err.Error())
+	}
+	a.dbConn = conn
 
 	if conf.StorageFilePath == "" {
 		a.storage = local.New()
@@ -53,6 +63,8 @@ func (a *App) Shutdown() error {
 			return fmt.Errorf("dump file storage on closing: %w", err)
 		}
 	}
+
+	a.dbConn.Close(context.Background())
 
 	return nil
 }

@@ -17,6 +17,7 @@ type Config struct {
 	TokenLen              int
 	StorageFilePath       string
 	FileStorageBufferSize int
+	DatabaseDSN           string
 }
 
 func Configure() *Config {
@@ -27,6 +28,7 @@ func Configure() *Config {
 	flag.IntVar(&conf.TokenLen, "token-len", defaultTokenLen, "length of a token")
 	flag.StringVar(&conf.StorageFilePath, "f", defaultStorageFilePath, "storage file path")
 	flag.IntVar(&conf.FileStorageBufferSize, "file-storage-buffer-size", defaultFileStorageBufferSize, "size of file storage buffer")
+	flag.StringVar(&conf.DatabaseDSN, "d", "", "db data source name")
 
 	flag.Parse()
 
@@ -40,6 +42,10 @@ func Configure() *Config {
 
 	if storageFilePath, set := os.LookupEnv("FILE_STORAGE_PATH"); set {
 		conf.StorageFilePath = storageFilePath
+	}
+
+	if DatabaseDSN, set := os.LookupEnv("DATABASE_DSN"); set {
+		conf.DatabaseDSN = DatabaseDSN
 	}
 
 	return conf
