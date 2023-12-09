@@ -3,17 +3,15 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/dumper"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
-	"github.com/jackc/pgx/v5"
-	"net/http"
-	"os"
-
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
 type App struct {
@@ -27,7 +25,7 @@ type App struct {
 func New(conf *configs.Config) *App {
 	a := new(App)
 
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	conn, err := pgx.Connect(context.Background(), conf.DatabaseDSN)
 	if err != nil {
 		logger.Log.Fatalln("connect to db: ", err.Error())
 	}
