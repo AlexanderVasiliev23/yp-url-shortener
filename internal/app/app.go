@@ -29,12 +29,14 @@ func New(ctx context.Context, conf *configs.Config) *App {
 
 	a.conf = conf
 
-	conn, err := pgx.Connect(ctx, a.conf.DatabaseDSN)
-	if err != nil {
-		logger.Log.Fatalln("connect to db: ", err.Error())
-		os.Exit(1)
+	if a.conf.DatabaseDSN != "" {
+		conn, err := pgx.Connect(ctx, a.conf.DatabaseDSN)
+		if err != nil {
+			logger.Log.Fatalln("connect to db: ", err.Error())
+			os.Exit(1)
+		}
+		a.dbConn = conn
 	}
-	a.dbConn = conn
 
 	storageObj, err := a.buildStorage(ctx)
 	if err != nil {
@@ -84,7 +86,9 @@ func (a *App) Shutdown() error {
 		}
 	}
 
-	a.dbConn.Close(context.Background())
+	if a.dbConn != nil {
+		a.dbConn.Close(context.Background())
+	}
 
 	return nil
 }
