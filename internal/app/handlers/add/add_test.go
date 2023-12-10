@@ -1,6 +1,7 @@
 package add
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,7 +32,7 @@ type mockRepo struct {
 	addingError error
 }
 
-func (m mockRepo) Add(_, _ string) error {
+func (m mockRepo) Add(ctx context.Context, _, _ string) error {
 	return m.addingError
 }
 

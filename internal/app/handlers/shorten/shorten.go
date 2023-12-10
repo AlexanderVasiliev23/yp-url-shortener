@@ -1,6 +1,7 @@
 package shorten
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,7 +14,7 @@ var (
 )
 
 type repository interface {
-	Add(token, url string) error
+	Add(ctx context.Context, token, url string) error
 }
 
 type tokenGenerator interface {
@@ -42,7 +43,7 @@ func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) 
 			return err
 		}
 
-		if err := repository.Add(token, req.URL); err != nil {
+		if err := repository.Add(c.Request().Context(), token, req.URL); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}

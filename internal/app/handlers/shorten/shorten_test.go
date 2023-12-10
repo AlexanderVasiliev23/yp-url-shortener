@@ -1,6 +1,7 @@
 package shorten
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/labstack/echo/v4"
@@ -35,7 +36,7 @@ type repositoryMock struct {
 	err error
 }
 
-func (r repositoryMock) Add(token, url string) error {
+func (r repositoryMock) Add(ctx context.Context, token, url string) error {
 	return r.err
 }
 

@@ -1,6 +1,15 @@
 package storage
 
+import (
+	"context"
+	"errors"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
+)
+
 type Storage interface {
-	Add(token, url string) error
-	Get(token string) (string, error)
+	Add(ctx context.Context, token, url string) error
+	Get(ctx context.Context, token string) (string, error)
 }
