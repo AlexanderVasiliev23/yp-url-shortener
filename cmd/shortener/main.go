@@ -19,12 +19,14 @@ func main() {
 	}
 	defer logger.Log.Sync()
 
-	application := app.New(conf)
+	ctx := context.Background()
+
+	application := app.New(ctx, conf)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	g, gCtx := errgroup.WithContext(context.Background())
+	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(application.Run)
 
 	select {

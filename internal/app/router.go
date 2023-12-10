@@ -8,6 +8,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func (a *App) configureRouter() *echo.Echo {
@@ -16,6 +17,7 @@ func (a *App) configureRouter() *echo.Echo {
 	e.Use(
 		logger.Middleware(),
 		gzip.Middleware(),
+		middleware.Recover(),
 	)
 
 	e.POST("/", add.Add(a.storage, a.tokenGenerator, a.conf.BaseAddress))

@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"errors"
 )
 
@@ -15,13 +16,13 @@ func New() *Storage {
 	return &s
 }
 
-func (s Storage) Add(token, url string) error {
+func (s Storage) Add(ctx context.Context, token, url string) error {
 	s[token] = url
 
 	return nil
 }
 
-func (s Storage) Get(token string) (string, error) {
+func (s Storage) Get(ctx context.Context, token string) (string, error) {
 	url, ok := s[token]
 	if ok {
 		return url, nil

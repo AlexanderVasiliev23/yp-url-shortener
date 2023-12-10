@@ -1,6 +1,7 @@
 package add
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 )
 
 type repository interface {
-	Add(token, url string) error
+	Add(ctx context.Context, token, url string) error
 }
 
 type tokenGenerator interface {
@@ -30,7 +31,7 @@ func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo
 			return nil
 		}
 
-		if err := repository.Add(token, string(url)); err != nil {
+		if err := repository.Add(c.Request().Context(), token, string(url)); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return nil
 		}

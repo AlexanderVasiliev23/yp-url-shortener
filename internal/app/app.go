@@ -8,10 +8,12 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/dumper"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/postgres"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"os"
 )
 
 type App struct {
@@ -22,32 +24,52 @@ type App struct {
 	dbConn         *pgx.Conn
 }
 
-func New(conf *configs.Config) *App {
+func New(ctx context.Context, conf *configs.Config) *App {
 	a := new(App)
 
-	if conf.DatabaseDSN != "" {
-		conn, err := pgx.Connect(context.Background(), conf.DatabaseDSN)
+	a.conf = conf
+
+	if a.conf.DatabaseDSN != "" {
+		conn, err := pgx.Connect(ctx, a.conf.DatabaseDSN)
 		if err != nil {
 			logger.Log.Fatalln("connect to db: ", err.Error())
+			os.Exit(1)
 		}
 		a.dbConn = conn
 	}
 
-	if conf.StorageFilePath == "" {
-		a.storage = local.New()
-	} else {
-		s, err := dumper.New(local.New(), conf.StorageFilePath, conf.FileStorageBufferSize)
-		if err != nil {
-			logger.Log.Fatalln("failed to create storage", err.Error())
-		}
-		a.storage = s
+	storageObj, err := a.buildStorage(ctx)
+	if err != nil {
+		logger.Log.Fatalln("creating storage: ", err.Error())
+		os.Exit(1)
 	}
-
-	a.conf = conf
+	a.storage = storageObj
 	a.tokenGenerator = tokengenerator.New(conf.TokenLen)
 	a.router = a.configureRouter()
 
 	return a
+}
+
+func (a *App) buildStorage(ctx context.Context) (storage.Storage, error) {
+	if a.dbConn != nil {
+		pgStorage, err := postgres.New(ctx, a.dbConn)
+		if err != nil {
+			return nil, fmt.Errorf("creating pg storage: %w", err)
+		}
+
+		return pgStorage, nil
+	}
+
+	if a.conf.StorageFilePath != "" {
+		s, err := dumper.New(ctx, local.New(), a.conf.StorageFilePath, a.conf.FileStorageBufferSize)
+		if err != nil {
+			return nil, fmt.Errorf("creating file dumpres storage: %w", err)
+		}
+
+		return s, nil
+	}
+
+	return local.New(), nil
 }
 
 func (a *App) Run() error {
@@ -64,7 +86,9 @@ func (a *App) Shutdown() error {
 		}
 	}
 
-	a.dbConn.Close(context.Background())
+	if a.dbConn != nil {
+		a.dbConn.Close(context.Background())
+	}
 
 	return nil
 }

@@ -2,32 +2,23 @@ package dumper
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
-	"github.com/google/uuid"
 	"io"
 	"os"
 )
 
-type record struct {
-	UUID        string `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-}
-
-func (r record) isValid() bool {
-	return r.UUID != "" && r.ShortURL != "" && r.OriginalURL != ""
-}
-
 type Storage struct {
 	wrappedStorage storage.Storage
 	file           *os.File
-	notSyncedYet   []*record
+	notSyncedYet   []*models.ShortLink
 	bufferSize     int
 }
 
-func New(wrappedStorage storage.Storage, filepath string, bufferSize int) (*Storage, error) {
+func New(ctx context.Context, wrappedStorage storage.Storage, filepath string, bufferSize int) (*Storage, error) {
 	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("opening storage file: %w", err)
@@ -36,29 +27,25 @@ func New(wrappedStorage storage.Storage, filepath string, bufferSize int) (*Stor
 	s := &Storage{
 		wrappedStorage: wrappedStorage,
 		file:           file,
-		notSyncedYet:   []*record{},
+		notSyncedYet:   []*models.ShortLink{},
 		bufferSize:     bufferSize,
 	}
 
-	if err := s.recoverDataFromFile(); err != nil {
+	if err := s.recoverDataFromFile(ctx); err != nil {
 		return nil, fmt.Errorf("recovering storage data from file %w", err)
 	}
 
 	return s, nil
 }
 
-func (s *Storage) Add(token, url string) error {
-	if err := s.wrappedStorage.Add(token, url); err != nil {
+func (s *Storage) Add(ctx context.Context, token, url string) error {
+	if err := s.wrappedStorage.Add(ctx, token, url); err != nil {
 		return fmt.Errorf("adding to wrapped storage: %w", err)
 	}
 
-	record := record{
-		UUID:        uuid.NewString(),
-		ShortURL:    token,
-		OriginalURL: url,
-	}
+	shortLink := models.NewShortLink(token, url)
 
-	s.notSyncedYet = append(s.notSyncedYet, &record)
+	s.notSyncedYet = append(s.notSyncedYet, shortLink)
 
 	if len(s.notSyncedYet) > s.bufferSize {
 		if err := s.Dump(); err != nil {
@@ -69,8 +56,8 @@ func (s *Storage) Add(token, url string) error {
 	return nil
 }
 
-func (s *Storage) Get(token string) (string, error) {
-	return s.wrappedStorage.Get(token)
+func (s *Storage) Get(ctx context.Context, token string) (string, error) {
+	return s.wrappedStorage.Get(ctx, token)
 }
 
 func (s *Storage) Dump() error {
@@ -82,12 +69,12 @@ func (s *Storage) Dump() error {
 		}
 	}
 
-	s.notSyncedYet = []*record{}
+	s.notSyncedYet = []*models.ShortLink{}
 
 	return nil
 }
 
-func (s *Storage) recoverDataFromFile() error {
+func (s *Storage) recoverDataFromFile(ctx context.Context) error {
 	_, err := s.file.Seek(0, io.SeekStart)
 	if err != nil {
 		return fmt.Errorf("storage file seek: %w", err)
@@ -96,16 +83,16 @@ func (s *Storage) recoverDataFromFile() error {
 	scanner := bufio.NewScanner(s.file)
 
 	for scanner.Scan() {
-		record := new(record)
-		if err := json.Unmarshal(scanner.Bytes(), record); err != nil {
+		shortLink := new(models.ShortLink)
+		if err := json.Unmarshal(scanner.Bytes(), shortLink); err != nil {
 			return fmt.Errorf("unmarshal record: %w", err)
 		}
 
-		if !record.isValid() {
+		if !shortLink.IsValid() {
 			return fmt.Errorf("unmarshalled record is not valid, original row: %s", scanner.Text())
 		}
 
-		if err := s.wrappedStorage.Add(record.ShortURL, record.OriginalURL); err != nil {
+		if err := s.wrappedStorage.Add(ctx, shortLink.Token, shortLink.Origin); err != nil {
 			return fmt.Errorf("adding to wrapped storage: %w", err)
 		}
 	}

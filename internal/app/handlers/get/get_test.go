@@ -1,6 +1,7 @@
 package get
 
 import (
+	"context"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,7 @@ type mockRepo struct {
 	url string
 }
 
-func (m mockRepo) Get(s string) (url string, err error) {
+func (m mockRepo) Get(ctx context.Context, s string) (url string, err error) {
 	return m.url, m.err
 }
 
