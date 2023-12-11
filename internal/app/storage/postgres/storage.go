@@ -65,7 +65,7 @@ func (s *Storage) createSchema(ctx context.Context) error {
 func (s *Storage) Add(ctx context.Context, token, url string) error {
 	shortLink := models.NewShortLink(token, url)
 
-	if err := s.save(ctx, shortLink); err != nil {
+	if err := s.SaveBatch(ctx, []*models.ShortLink{shortLink}); err != nil {
 		return fmt.Errorf("save short link: %w", err)
 	}
 
@@ -104,7 +104,7 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	}
 
 	var entries [][]any
-	columns := []string{"uuid", "token", "original"}
+	columns := []string{"id", "token", "original"}
 	tableName := "short_links"
 
 	for _, shortLink := range shortLinks {

@@ -68,6 +68,7 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.
 		}
 
 		c.Response().Header().Set("Content-Type", "application/json")
+		c.Response().WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
