@@ -89,7 +89,7 @@ func (s *Storage) Get(ctx context.Context, token string) (string, error) {
 }
 
 func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
-	q := `insert into short_links (uuid, token, original) values ($1,$2,$3)`
+	q := `insert into short_links (id, token, original) values ($1,$2,$3)`
 
 	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original); err != nil {
 		return fmt.Errorf("exec insert query: %w", err)
