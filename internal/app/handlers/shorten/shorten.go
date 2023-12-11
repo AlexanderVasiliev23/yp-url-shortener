@@ -58,13 +58,13 @@ func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) 
 					c.Response().WriteHeader(http.StatusInternalServerError)
 					return err
 				}
+				c.Response().WriteHeader(http.StatusConflict)
 				response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
 				if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
 					c.Response().WriteHeader(http.StatusInternalServerError)
 					return err
 				}
 
-				c.Response().WriteHeader(http.StatusConflict)
 				return nil
 			}
 			c.Response().WriteHeader(http.StatusInternalServerError)
