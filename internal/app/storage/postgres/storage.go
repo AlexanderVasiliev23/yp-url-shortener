@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
+
+var _ storage.Storage = (*Storage)(nil)
 
 type Storage struct {
 	dbConn *pgx.Conn
@@ -35,9 +39,14 @@ func (s *Storage) createSchema(ctx context.Context) error {
 		)
 	`
 
-	createIndexQuery := `
+	createTokenIndexQuery := `
 		create index if not exists short_links_token_index
 			on short_links (token);
+	`
+
+	createOriginalURLUniqueIndexQuery := `
+		create unique index if not exists short_links_original_unique_index 
+			on short_links (original);
 	`
 
 	tx, err := s.dbConn.Begin(ctx)
@@ -49,10 +58,13 @@ func (s *Storage) createSchema(ctx context.Context) error {
 	}()
 
 	if _, err := tx.Exec(ctx, createTableQuery); err != nil {
-		return fmt.Errorf("exec schema creation query: %w", err)
+		return fmt.Errorf("createTableQuery: %w", err)
 	}
-	if _, err := tx.Exec(ctx, createIndexQuery); err != nil {
-		return fmt.Errorf("exec schema creation query: %w", err)
+	if _, err := tx.Exec(ctx, createTokenIndexQuery); err != nil {
+		return fmt.Errorf("createTokenIndexQuery: %w", err)
+	}
+	if _, err := tx.Exec(ctx, createOriginalURLUniqueIndexQuery); err != nil {
+		return fmt.Errorf("createOriginalURLUniqueIndexQuery: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -65,7 +77,7 @@ func (s *Storage) createSchema(ctx context.Context) error {
 func (s *Storage) Add(ctx context.Context, token, url string) error {
 	shortLink := models.NewShortLink(token, url)
 
-	if err := s.SaveBatch(ctx, []*models.ShortLink{shortLink}); err != nil {
+	if err := s.save(ctx, shortLink); err != nil {
 		return fmt.Errorf("save short link: %w", err)
 	}
 
@@ -88,14 +100,18 @@ func (s *Storage) Get(ctx context.Context, token string) (string, error) {
 	return link, nil
 }
 
-func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
-	q := `insert into short_links (id, token, original) values ($1,$2,$3)`
+func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
+	var token string
 
-	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original); err != nil {
-		return fmt.Errorf("exec insert query: %w", err)
+	if err := s.dbConn.QueryRow(ctx, "select token from short_links where original = $1", url).Scan(&token); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", storage.ErrNotFound
+		}
+
+		return "", fmt.Errorf("GetTokenByURL: %w", err)
 	}
 
-	return nil
+	return token, nil
 }
 
 func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
@@ -120,6 +136,20 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 
 	if err != nil {
 		return fmt.Errorf("copying into %s table: %w", tableName, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
+	q := `insert into short_links (id, token, original) values ($1,$2,$3)`
+
+	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return storage.ErrAlreadyExists
+		}
+		return fmt.Errorf("exec insert query: %w", err)
 	}
 
 	return nil

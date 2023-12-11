@@ -2,7 +2,9 @@ package add
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"io"
 	"net/http"
 
@@ -11,6 +13,7 @@ import (
 
 type repository interface {
 	Add(ctx context.Context, token, url string) error
+	GetTokenByURL(ctx context.Context, url string) (string, error)
 }
 
 type tokenGenerator interface {
@@ -32,7 +35,20 @@ func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo
 		}
 
 		if err := repository.Add(c.Request().Context(), token, string(url)); err != nil {
-			c.Response().WriteHeader(http.StatusInternalServerError)
+			if !errors.Is(err, storage.ErrAlreadyExists) {
+				c.Response().WriteHeader(http.StatusInternalServerError)
+				return nil
+			}
+
+			token, err := repository.GetTokenByURL(c.Request().Context(), string(url))
+			if err != nil {
+				c.Response().WriteHeader(http.StatusInternalServerError)
+				return nil
+			}
+
+			c.Response().WriteHeader(http.StatusConflict)
+			_, _ = fmt.Fprintf(c.Response(), "%s/%s", addr, token)
+
 			return nil
 		}
 

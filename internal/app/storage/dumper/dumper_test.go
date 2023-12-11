@@ -41,6 +41,10 @@ func (m mockStorage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLi
 	return nil
 }
 
+func (m mockStorage) GetTokenByURL(ctx context.Context, url string) (string, error) {
+	return "", nil
+}
+
 func TestStorage_RecoveringFromFileSuccess(t *testing.T) {
 	defer os.Remove(testStorageFilePath)
 

@@ -11,6 +11,8 @@ import (
 	"os"
 )
 
+var _ storage.Storage = (*Storage)(nil)
+
 type Storage struct {
 	wrappedStorage storage.Storage
 	file           *os.File
@@ -68,6 +70,10 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	}
 
 	return nil
+}
+
+func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
+	return s.wrappedStorage.GetTokenByURL(ctx, url)
 }
 
 func (s *Storage) Dump() error {
