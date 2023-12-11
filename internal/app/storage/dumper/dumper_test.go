@@ -37,7 +37,7 @@ func (m mockStorage) Get(ctx context.Context, token string) (string, error) {
 	return url, nil
 }
 
-func (s mockStorage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
+func (m mockStorage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
 	return nil
 }
 
