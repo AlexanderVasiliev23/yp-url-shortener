@@ -29,9 +29,9 @@ func (s *Storage) createSchema(ctx context.Context) error {
 	createTableQuery := `
 		create table if not exists short_links
 		(
-			uuid   uuid primary key,
-			token  varchar(255) not null,
-			origin varchar(255) not null
+			id       uuid primary key,
+			token    varchar(255) not null,
+			original varchar(255) not null
 		)
 	`
 
@@ -40,7 +40,7 @@ func (s *Storage) createSchema(ctx context.Context) error {
 			on short_links (token);
 	`
 
-	tx, err := s.dbConn.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := s.dbConn.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
@@ -48,10 +48,10 @@ func (s *Storage) createSchema(ctx context.Context) error {
 		_ = tx.Rollback(ctx)
 	}()
 
-	if _, err := s.dbConn.Exec(context.Background(), createTableQuery); err != nil {
+	if _, err := tx.Exec(ctx, createTableQuery); err != nil {
 		return fmt.Errorf("exec schema creation query: %w", err)
 	}
-	if _, err := s.dbConn.Exec(context.Background(), createIndexQuery); err != nil {
+	if _, err := tx.Exec(ctx, createIndexQuery); err != nil {
 		return fmt.Errorf("exec schema creation query: %w", err)
 	}
 
@@ -73,7 +73,7 @@ func (s *Storage) Add(ctx context.Context, token, url string) error {
 }
 
 func (s *Storage) Get(ctx context.Context, token string) (string, error) {
-	q := `select origin from short_links where token = $1;`
+	q := `select original from short_links where token = $1;`
 
 	var link string
 
@@ -89,10 +89,37 @@ func (s *Storage) Get(ctx context.Context, token string) (string, error) {
 }
 
 func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
-	q := `insert into short_links (uuid, token, origin) values ($1,$2,$3)`
+	q := `insert into short_links (uuid, token, original) values ($1,$2,$3)`
 
-	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Origin); err != nil {
+	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original); err != nil {
 		return fmt.Errorf("exec insert query: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
+	if len(shortLinks) == 0 {
+		return nil
+	}
+
+	var entries [][]any
+	columns := []string{"uuid", "token", "original"}
+	tableName := "short_links"
+
+	for _, shortLink := range shortLinks {
+		entries = append(entries, []any{shortLink.ID, shortLink.Token, shortLink.Original})
+	}
+
+	_, err := s.dbConn.CopyFrom(
+		ctx,
+		pgx.Identifier{tableName},
+		columns,
+		pgx.CopyFromRows(entries),
+	)
+
+	if err != nil {
+		return fmt.Errorf("copying into %s table: %w", tableName, err)
 	}
 
 	return nil
