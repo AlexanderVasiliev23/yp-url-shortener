@@ -18,11 +18,17 @@ func TestAdd(t *testing.T) {
 	err := s.Add(context.Background(), testToken, testURL)
 
 	require.NoError(t, err)
-	assert.Equal(t, Storage{testToken: testURL}, *s)
+	assert.Equal(t, Storage{
+		tokenToURLMap: map[string]string{testToken: testURL},
+		URLToTokenMap: map[string]string{testURL: testToken},
+	}, *s)
 }
 
 func TestGetFound(t *testing.T) {
-	s := Storage{testToken: testURL}
+	s := Storage{
+		tokenToURLMap: map[string]string{testToken: testURL},
+		URLToTokenMap: map[string]string{testURL: testToken},
+	}
 	url, err := s.Get(context.Background(), testToken)
 
 	require.NoError(t, err)

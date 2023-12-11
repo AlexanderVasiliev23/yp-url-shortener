@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -15,6 +16,7 @@ var (
 
 type repository interface {
 	Add(ctx context.Context, token, url string) error
+	GetTokenByURL(ctx context.Context, url string) (string, error)
 }
 
 type tokenGenerator interface {
@@ -43,20 +45,36 @@ func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) 
 			return err
 		}
 
+		type resp struct {
+			Result string `json:"result"`
+		}
+
+		c.Response().Header().Set("Content-Type", "application/json")
+
 		if err := repository.Add(c.Request().Context(), token, req.URL); err != nil {
+			if errors.Is(err, storage.ErrAlreadyExists) {
+				token, err := repository.GetTokenByURL(c.Request().Context(), req.URL)
+				if err != nil {
+					c.Response().WriteHeader(http.StatusInternalServerError)
+					return err
+				}
+				response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
+				if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
+					c.Response().WriteHeader(http.StatusInternalServerError)
+					return err
+				}
+
+				c.Response().WriteHeader(http.StatusConflict)
+				return nil
+			}
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
 
-		resp := struct {
-			Result string `json:"result"`
-		}{
-			Result: fmt.Sprintf("%s/%s", addr, token),
-		}
-
-		c.Response().Header().Set("Content-Type", "application/json")
+		response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
 		c.Response().WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(c.Response().Writer).Encode(resp); err != nil {
+		c.Response().Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}

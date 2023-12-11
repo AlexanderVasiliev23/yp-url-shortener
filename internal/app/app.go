@@ -32,7 +32,7 @@ func New(ctx context.Context, conf *configs.Config) *App {
 	if a.conf.DatabaseDSN != "" {
 		conn, err := pgx.Connect(ctx, a.conf.DatabaseDSN)
 		if err != nil {
-			logger.Log.Fatalln("connect to db: ", err.Error())
+			logger.Log.Fatalln("connect to db:", err.Error())
 			os.Exit(1)
 		}
 		a.dbConn = conn
@@ -40,7 +40,7 @@ func New(ctx context.Context, conf *configs.Config) *App {
 
 	storageObj, err := a.buildStorage(ctx)
 	if err != nil {
-		logger.Log.Fatalln("creating storage: ", err.Error())
+		logger.Log.Fatalln("creating storage:", err.Error())
 		os.Exit(1)
 	}
 	a.storage = storageObj
