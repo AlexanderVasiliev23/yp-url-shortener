@@ -21,7 +21,7 @@ type tokenGenerator interface {
 func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		type reqItem struct {
-			CorrelationId string `json:"correlation_id"`
+			CorrelationID string `json:"correlation_id"`
 			OriginalURL   string `json:"original_url"`
 		}
 
@@ -35,7 +35,7 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.
 		}
 
 		type respItem struct {
-			CorrelationId string `json:"correlation_id"`
+			CorrelationID string `json:"correlation_id"`
 			ShortURL      string `json:"short_url"`
 		}
 
@@ -57,7 +57,7 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.
 			toSave = append(toSave, shortLink)
 
 			respItem := respItem{
-				CorrelationId: requestItem.CorrelationId,
+				CorrelationID: requestItem.CorrelationID,
 				ShortURL:      fmt.Sprintf("%s/%s", addr, token),
 			}
 

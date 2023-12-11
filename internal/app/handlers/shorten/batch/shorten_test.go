@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	correlationId1 = "correlationId1"
-	correlationId2 = "correlationId2"
+	correlationID1 = "correlationId1"
+	correlationID2 = "correlationId2"
 	token1         = "token1"
 	token2         = "token2"
 	addr           = "test_addr"
@@ -37,7 +37,7 @@ func (t tokenGeneratorMock) Generate() (string, error) {
 }
 
 func TestShorten(t *testing.T) {
-	reqBody := fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationId1, correlationId2)
+	reqBody := fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationID1, correlationID2)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(reqBody))
 	resp := httptest.NewRecorder()
@@ -57,6 +57,6 @@ func TestShorten(t *testing.T) {
 	err := h(c)
 
 	assert.NoError(t, err)
-	expectedBody := fmt.Sprintf(`[{"correlation_id":"%s","short_url":"%s/%s"},{"correlation_id":"%s","short_url":"%s/%s"}]`+"\n", correlationId1, addr, token1, correlationId2, addr, token2)
+	expectedBody := fmt.Sprintf(`[{"correlation_id":"%s","short_url":"%s/%s"},{"correlation_id":"%s","short_url":"%s/%s"}]`+"\n", correlationID1, addr, token1, correlationID2, addr, token2)
 	assert.Equal(t, expectedBody, resp.Body.String())
 }
