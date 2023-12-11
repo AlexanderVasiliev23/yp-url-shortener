@@ -146,7 +146,7 @@ func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
 
 	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original); err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return storage.ErrAlreadyExists
 		}
 		return fmt.Errorf("exec insert query: %w", err)
