@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -36,13 +37,17 @@ func (m mockStorage) Get(ctx context.Context, token string) (string, error) {
 	return url, nil
 }
 
+func (m mockStorage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
+	return nil
+}
+
 func TestStorage_RecoveringFromFileSuccess(t *testing.T) {
 	defer os.Remove(testStorageFilePath)
 
 	token := "mbQTUSzkAa"
 	URL := "https://ya.ru"
 
-	err := os.WriteFile(testStorageFilePath, []byte(fmt.Sprintf(`{"uuid":"%s","short_url":"%s","original_url":"%s"}`, uuid.NewString(), token, URL)+"\n"), os.ModePerm)
+	err := os.WriteFile(testStorageFilePath, []byte(fmt.Sprintf(`{"id":"%s","token":"%s","original":"%s"}`, uuid.NewString(), token, URL)+"\n"), os.ModePerm)
 	require.NoError(t, err)
 
 	s, err := New(context.Background(), mockStorage{make(map[string]string)}, testStorageFilePath, defaultBufferSize)

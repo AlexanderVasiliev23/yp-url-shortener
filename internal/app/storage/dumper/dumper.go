@@ -60,6 +60,16 @@ func (s *Storage) Get(ctx context.Context, token string) (string, error) {
 	return s.wrappedStorage.Get(ctx, token)
 }
 
+func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
+	for _, shortLink := range shortLinks {
+		if err := s.Add(ctx, shortLink.Token, shortLink.Original); err != nil {
+			return fmt.Errorf("add one short link: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (s *Storage) Dump() error {
 	encoder := json.NewEncoder(s.file)
 
@@ -92,7 +102,7 @@ func (s *Storage) recoverDataFromFile(ctx context.Context) error {
 			return fmt.Errorf("unmarshalled record is not valid, original row: %s", scanner.Text())
 		}
 
-		if err := s.wrappedStorage.Add(ctx, shortLink.Token, shortLink.Origin); err != nil {
+		if err := s.wrappedStorage.Add(ctx, shortLink.Token, shortLink.Original); err != nil {
 			return fmt.Errorf("adding to wrapped storage: %w", err)
 		}
 	}

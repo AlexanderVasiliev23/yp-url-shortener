@@ -3,19 +3,19 @@ package models
 import "github.com/google/uuid"
 
 type ShortLink struct {
-	ID     string `json:"uuid"`
-	Token  string `json:"short_url"`
-	Origin string `json:"original_url"`
+	ID       string `json:"id"`
+	Token    string `json:"token"`
+	Original string `json:"original"`
 }
 
-func NewShortLink(token, origin string) *ShortLink {
+func NewShortLink(token, original string) *ShortLink {
 	return &ShortLink{
-		ID:     uuid.NewString(),
-		Token:  token,
-		Origin: origin,
+		ID:       uuid.NewString(),
+		Token:    token,
+		Original: original,
 	}
 }
 
 func (l ShortLink) IsValid() bool {
-	return l.ID != "" && l.Token != "" && l.Origin != ""
+	return l.ID != "" && l.Token != "" && l.Original != ""
 }
