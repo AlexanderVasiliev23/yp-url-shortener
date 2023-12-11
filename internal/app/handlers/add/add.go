@@ -35,18 +35,20 @@ func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo
 		}
 
 		if err := repository.Add(c.Request().Context(), token, string(url)); err != nil {
-			if errors.Is(err, storage.ErrAlreadyExists) {
-				token, err := repository.GetTokenByURL(c.Request().Context(), string(url))
-				if err != nil {
-					c.Response().WriteHeader(http.StatusInternalServerError)
-					return nil
-				}
-
-				c.Response().WriteHeader(http.StatusConflict)
-				_, _ = fmt.Fprintf(c.Response(), "%s/%s", addr, token)
+			if !errors.Is(err, storage.ErrAlreadyExists) {
+				c.Response().WriteHeader(http.StatusInternalServerError)
 				return nil
 			}
-			c.Response().WriteHeader(http.StatusInternalServerError)
+
+			token, err := repository.GetTokenByURL(c.Request().Context(), string(url))
+			if err != nil {
+				c.Response().WriteHeader(http.StatusInternalServerError)
+				return nil
+			}
+
+			c.Response().WriteHeader(http.StatusConflict)
+			_, _ = fmt.Fprintf(c.Response(), "%s/%s", addr, token)
+
 			return nil
 		}
 

@@ -52,23 +52,25 @@ func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) 
 		c.Response().Header().Set("Content-Type", "application/json")
 
 		if err := repository.Add(c.Request().Context(), token, req.URL); err != nil {
-			if errors.Is(err, storage.ErrAlreadyExists) {
-				token, err := repository.GetTokenByURL(c.Request().Context(), req.URL)
-				if err != nil {
-					c.Response().WriteHeader(http.StatusInternalServerError)
-					return err
-				}
-				c.Response().WriteHeader(http.StatusConflict)
-				response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
-				if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
-					c.Response().WriteHeader(http.StatusInternalServerError)
-					return err
-				}
-
-				return nil
+			if !errors.Is(err, storage.ErrAlreadyExists) {
+				c.Response().WriteHeader(http.StatusInternalServerError)
+				return err
 			}
-			c.Response().WriteHeader(http.StatusInternalServerError)
-			return err
+
+			token, err := repository.GetTokenByURL(c.Request().Context(), req.URL)
+			if err != nil {
+				c.Response().WriteHeader(http.StatusInternalServerError)
+				return err
+			}
+
+			c.Response().WriteHeader(http.StatusConflict)
+			response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
+			if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
+				c.Response().WriteHeader(http.StatusInternalServerError)
+				return err
+			}
+
+			return nil
 		}
 
 		response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
