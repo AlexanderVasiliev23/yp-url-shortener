@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -48,7 +47,6 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.
 		for _, requestItem := range requestItems {
 			token, err := tokenGenerator.Generate()
 			if err != nil {
-				logger.Log.Errorf("tokenGenerator.Generate: %s", err)
 				c.Response().WriteHeader(http.StatusInternalServerError)
 				return err
 			}
@@ -65,14 +63,12 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.
 		}
 
 		if err := saver.SaveBatch(c.Request().Context(), toSave); err != nil {
-			logger.Log.Errorf("saver.SaveBatch: %s", err)
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
 
 		c.Response().Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
-			logger.Log.Errorf("encode response: %s", err)
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
