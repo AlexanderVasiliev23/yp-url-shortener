@@ -26,6 +26,19 @@ type Claims struct {
 	UserID int
 }
 
+func Auth(JWTSecretKey string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if _, err := getUserIDFromCookie(c, JWTSecretKey); err != nil {
+				c.Response().WriteHeader(http.StatusUnavailableForLegalReasons)
+				return err
+			}
+
+			return next(c)
+		}
+	}
+}
+
 func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

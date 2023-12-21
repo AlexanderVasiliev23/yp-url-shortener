@@ -29,7 +29,12 @@ func (a *App) configureRouter() *echo.Echo {
 	e.POST("/api/shorten", shorten.Shorten(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress))
 	e.POST("/api/shorten/batch", batch.Shorten(a.storage, a.tokenGenerator, a.uuidGenerator, a.userContextFetcher, a.conf.BaseAddress))
 	e.GET("/ping", ping.Ping(a.dbConn))
-	e.GET("/api/user/urls", urls.Urls(a.storage, a.userContextFetcher, a.conf.BaseAddress))
+
+	g := e.Group(
+		"/api/user",
+		jwt.Auth(a.conf.JWTSecretKey),
+	)
+	g.GET("/urls", urls.Urls(a.storage, a.userContextFetcher, a.conf.BaseAddress))
 
 	return e
 }
