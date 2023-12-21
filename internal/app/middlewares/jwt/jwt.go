@@ -31,15 +31,21 @@ func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			userID, err := getUserIDFromCookie(c, JWTSecretKey)
 			if err != nil {
+				if errors.Is(err, errUserIDNotSet) {
+					c.Response().WriteHeader(http.StatusUnauthorized)
+					return err
+				}
+
 				if errors.Is(err, errCookieNotFound) || errors.Is(err, errTokenParsing) || errors.Is(err, errInvalidJWT) {
 					userID = generateUserID()
 					if err := setCookie(c, userID, JWTSecretKey); err != nil {
 						c.Response().WriteHeader(http.StatusInternalServerError)
 						return err
 					}
+				} else {
+					c.Response().WriteHeader(http.StatusInternalServerError)
+					return err
 				}
-
-				return err
 			}
 
 			c.SetRequest(
