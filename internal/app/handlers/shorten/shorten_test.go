@@ -1,8 +1,10 @@
 package shorten
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -35,8 +37,12 @@ type repositoryMock struct {
 	err error
 }
 
-func (r repositoryMock) Add(token, url string) error {
+func (r repositoryMock) Add(ctx context.Context, token, url string) error {
 	return r.err
+}
+
+func (r repositoryMock) GetTokenByURL(ctx context.Context, url string) (string, error) {
+	return defaultToken, nil
 }
 
 func TestShorten(t *testing.T) {
@@ -121,6 +127,19 @@ func TestShorten(t *testing.T) {
 			},
 			tokenGenerator: tokenGeneratorMock{},
 			repository:     repositoryMock{err: ErrRepositorySaving},
+		},
+		{
+			name: "already exists",
+			request: request{
+				method: http.MethodPost,
+				body:   `{"url": "https://practicum.yandex.ru/"}`,
+			},
+			want: want{
+				code: http.StatusConflict,
+				body: fmt.Sprintf("{\"result\":\"%s/%s\"}\n", addr, defaultToken),
+			},
+			tokenGenerator: tokenGeneratorMock{},
+			repository:     repositoryMock{err: storage.ErrAlreadyExists},
 		},
 	}
 

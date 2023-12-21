@@ -1,8 +1,10 @@
 package add
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -28,11 +30,15 @@ func (m mockTokenGenerator) Generate() (string, error) {
 }
 
 type mockRepo struct {
-	addingError error
+	err error
 }
 
-func (m mockRepo) Add(_, _ string) error {
-	return m.addingError
+func (m mockRepo) Add(ctx context.Context, _, _ string) error {
+	return m.err
+}
+
+func (m mockRepo) GetTokenByURL(ctx context.Context, url string) (string, error) {
+	return defaultToken, nil
 }
 
 func TestAdd(t *testing.T) {
@@ -73,7 +79,7 @@ func TestAdd(t *testing.T) {
 		},
 		{
 			name:   "repo returns an error",
-			repo:   mockRepo{addingError: errors.New("")},
+			repo:   mockRepo{err: errors.New("")},
 			tokGen: mockTokenGenerator{},
 			method: http.MethodPost,
 			body:   "test_url",
@@ -91,6 +97,17 @@ func TestAdd(t *testing.T) {
 			want: want{
 				code: http.StatusInternalServerError,
 				body: "",
+			},
+		},
+		{
+			name:   "already exists",
+			repo:   mockRepo{err: storage.ErrAlreadyExists},
+			tokGen: mockTokenGenerator{},
+			method: http.MethodPost,
+			body:   "test_url",
+			want: want{
+				code: http.StatusConflict,
+				body: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
 		},
 	}
