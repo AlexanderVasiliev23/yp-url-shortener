@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -37,7 +39,7 @@ type repositoryMock struct {
 	err error
 }
 
-func (r repositoryMock) Add(ctx context.Context, token, url string) error {
+func (r repositoryMock) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return r.err
 }
 
@@ -148,7 +150,7 @@ func TestShorten(t *testing.T) {
 			r := httptest.NewRequest(tc.request.method, path, strings.NewReader(tc.request.body))
 			w := httptest.NewRecorder()
 
-			h := Shorten(tc.repository, tc.tokenGenerator, addr)
+			h := Shorten(tc.repository, tc.tokenGenerator, &mock.UserContextFetcherMock{}, addr)
 
 			e := echo.New()
 			c := e.NewContext(r, w)

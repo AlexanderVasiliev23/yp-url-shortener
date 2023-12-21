@@ -9,6 +9,7 @@ const (
 	defaultTokenLen              = 10
 	defaultStorageFilePath       = "/tmp/short-url-db.json"
 	defaultFileStorageBufferSize = 10
+	defaultJWTSecretKey          = "V}^7/Y-t;F2*E,G>Tw<$Dd"
 )
 
 type Config struct {
@@ -18,6 +19,7 @@ type Config struct {
 	StorageFilePath       string
 	FileStorageBufferSize int
 	DatabaseDSN           string
+	JWTSecretKey          string
 }
 
 func Configure() *Config {
@@ -46,6 +48,11 @@ func Configure() *Config {
 
 	if DatabaseDSN, set := os.LookupEnv("DATABASE_DSN"); set {
 		conf.DatabaseDSN = DatabaseDSN
+	}
+
+	conf.JWTSecretKey = defaultJWTSecretKey
+	if JWTSecretKey, set := os.LookupEnv("JWT_SECRET_KEY"); set {
+		conf.JWTSecretKey = JWTSecretKey
 	}
 
 	return conf

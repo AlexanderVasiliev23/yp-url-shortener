@@ -10,6 +10,9 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/postgres"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -17,17 +20,21 @@ import (
 )
 
 type App struct {
-	conf           *configs.Config
-	storage        storage.Storage
-	tokenGenerator *tokengenerator.TokenGenerator
-	router         *echo.Echo
-	dbConn         *pgx.Conn
+	conf               *configs.Config
+	storage            storage.Storage
+	tokenGenerator     *tokengenerator.TokenGenerator
+	router             *echo.Echo
+	dbConn             *pgx.Conn
+	uuidGenerator      uuidgenerator.UUIDGenerator
+	userContextFetcher *auth.UserContextFetcher
 }
 
 func New(ctx context.Context, conf *configs.Config) *App {
 	a := new(App)
 
 	a.conf = conf
+	a.uuidGenerator = google.UUIDGenerator{}
+	a.userContextFetcher = &auth.UserContextFetcher{}
 
 	if a.conf.DatabaseDSN != "" {
 		conn, err := pgx.Connect(ctx, a.conf.DatabaseDSN)
@@ -61,7 +68,7 @@ func (a *App) buildStorage(ctx context.Context) (storage.Storage, error) {
 	}
 
 	if a.conf.StorageFilePath != "" {
-		s, err := dumper.New(ctx, local.New(), a.conf.StorageFilePath, a.conf.FileStorageBufferSize)
+		s, err := dumper.New(ctx, local.New(a.uuidGenerator), a.uuidGenerator, a.conf.StorageFilePath, a.conf.FileStorageBufferSize)
 		if err != nil {
 			return nil, fmt.Errorf("creating file dumpres storage: %w", err)
 		}
@@ -69,7 +76,7 @@ func (a *App) buildStorage(ctx context.Context) (storage.Storage, error) {
 		return s, nil
 	}
 
-	return local.New(), nil
+	return local.New(a.uuidGenerator), nil
 }
 
 func (a *App) Run() error {

@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -15,7 +17,7 @@ var (
 )
 
 type repository interface {
-	Add(ctx context.Context, token, url string) error
+	Add(ctx context.Context, shortLink *models.ShortLink) error
 	GetTokenByURL(ctx context.Context, url string) (string, error)
 }
 
@@ -23,7 +25,11 @@ type tokenGenerator interface {
 	Generate() (string, error)
 }
 
-func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) echo.HandlerFunc {
+type userContextFetcher interface {
+	GetUserIDFromContext(ctx context.Context) (int, error)
+}
+
+func Shorten(repository repository, tokenGenerator tokenGenerator, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := struct {
 			URL string
@@ -51,7 +57,13 @@ func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) 
 
 		c.Response().Header().Set("Content-Type", "application/json")
 
-		if err := repository.Add(c.Request().Context(), token, req.URL); err != nil {
+		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
+		if err != nil {
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		model := models.NewShortLink(userID, uuid.New(), token, req.URL)
+		if err := repository.Add(c.Request().Context(), model); err != nil {
 			if !errors.Is(err, storage.ErrAlreadyExists) {
 				c.Response().WriteHeader(http.StatusInternalServerError)
 				return err

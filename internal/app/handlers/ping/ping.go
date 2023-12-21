@@ -15,7 +15,7 @@ func Ping(dbConn *pgx.Conn) echo.HandlerFunc {
 
 		if err := dbConn.Ping(c.Request().Context()); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
-			return nil
+			return err
 		}
 
 		return nil
