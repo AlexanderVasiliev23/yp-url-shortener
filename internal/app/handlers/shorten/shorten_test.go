@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,7 @@ type repositoryMock struct {
 	err error
 }
 
-func (r repositoryMock) Add(ctx context.Context, token, url string) error {
+func (r repositoryMock) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return r.err
 }
 

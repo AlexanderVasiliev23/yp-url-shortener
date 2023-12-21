@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
 	"io"
 	"os"
 )
@@ -18,9 +19,10 @@ type Storage struct {
 	file           *os.File
 	notSyncedYet   []*models.ShortLink
 	bufferSize     int
+	uuidGenerator  uuidgenerator.UUIDGenerator
 }
 
-func New(ctx context.Context, wrappedStorage storage.Storage, filepath string, bufferSize int) (*Storage, error) {
+func New(ctx context.Context, wrappedStorage storage.Storage, uuidGenerator uuidgenerator.UUIDGenerator, filepath string, bufferSize int) (*Storage, error) {
 	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("opening storage file: %w", err)
@@ -31,6 +33,7 @@ func New(ctx context.Context, wrappedStorage storage.Storage, filepath string, b
 		file:           file,
 		notSyncedYet:   []*models.ShortLink{},
 		bufferSize:     bufferSize,
+		uuidGenerator:  uuidGenerator,
 	}
 
 	if err := s.recoverDataFromFile(ctx); err != nil {
@@ -40,12 +43,10 @@ func New(ctx context.Context, wrappedStorage storage.Storage, filepath string, b
 	return s, nil
 }
 
-func (s *Storage) Add(ctx context.Context, token, url string) error {
-	if err := s.wrappedStorage.Add(ctx, token, url); err != nil {
+func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
+	if err := s.wrappedStorage.Add(ctx, shortLink); err != nil {
 		return fmt.Errorf("adding to wrapped storage: %w", err)
 	}
-
-	shortLink := models.NewShortLink(token, url)
 
 	s.notSyncedYet = append(s.notSyncedYet, shortLink)
 
@@ -64,7 +65,7 @@ func (s *Storage) Get(ctx context.Context, token string) (string, error) {
 
 func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
 	for _, shortLink := range shortLinks {
-		if err := s.Add(ctx, shortLink.Token, shortLink.Original); err != nil {
+		if err := s.Add(ctx, shortLink); err != nil {
 			return fmt.Errorf("add one short link: %w", err)
 		}
 	}
@@ -74,6 +75,10 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 
 func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
 	return s.wrappedStorage.GetTokenByURL(ctx, url)
+}
+
+func (s *Storage) FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error) {
+	return s.wrappedStorage.FindByUserId(ctx, userId)
 }
 
 func (s *Storage) Dump() error {
@@ -108,7 +113,7 @@ func (s *Storage) recoverDataFromFile(ctx context.Context) error {
 			return fmt.Errorf("unmarshalled record is not valid, original row: %s", scanner.Text())
 		}
 
-		if err := s.wrappedStorage.Add(ctx, shortLink.Token, shortLink.Original); err != nil {
+		if err := s.wrappedStorage.Add(ctx, shortLink); err != nil {
 			return fmt.Errorf("adding to wrapped storage: %w", err)
 		}
 	}

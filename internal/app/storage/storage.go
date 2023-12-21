@@ -12,8 +12,9 @@ var (
 )
 
 type Storage interface {
-	Add(ctx context.Context, token, url string) error
+	Add(ctx context.Context, shortLink *models.ShortLink) error
 	Get(ctx context.Context, token string) (string, error)
 	SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error
 	GetTokenByURL(ctx context.Context, url string) (string, error)
+	FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error)
 }

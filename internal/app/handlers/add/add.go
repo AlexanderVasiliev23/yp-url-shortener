@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 
@@ -12,7 +14,7 @@ import (
 )
 
 type repository interface {
-	Add(ctx context.Context, token, url string) error
+	Add(ctx context.Context, shortLink *models.ShortLink) error
 	GetTokenByURL(ctx context.Context, url string) (string, error)
 }
 
@@ -34,7 +36,8 @@ func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo
 			return nil
 		}
 
-		if err := repository.Add(c.Request().Context(), token, string(url)); err != nil {
+		model := models.NewShortLinkWithoutUserId(uuid.New(), token, string(url))
+		if err := repository.Add(c.Request().Context(), model); err != nil {
 			if !errors.Is(err, storage.ErrAlreadyExists) {
 				c.Response().WriteHeader(http.StatusInternalServerError)
 				return nil

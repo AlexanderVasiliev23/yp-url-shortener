@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -17,7 +18,11 @@ type tokenGenerator interface {
 	Generate() (string, error)
 }
 
-func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.HandlerFunc {
+type uuidGenerator interface {
+	Generate() uuid.UUID
+}
+
+func Shorten(saver batchSaver, tokenGenerator tokenGenerator, uuidGenerator uuidGenerator, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		type reqItem struct {
 			CorrelationID string `json:"correlation_id"`
@@ -51,7 +56,7 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, addr string) echo.
 				return err
 			}
 
-			shortLink := models.NewShortLink(token, requestItem.OriginalURL)
+			shortLink := models.NewShortLinkWithoutUserId(uuidGenerator.Generate(), token, requestItem.OriginalURL)
 			toSave = append(toSave, shortLink)
 
 			respItem := respItem{

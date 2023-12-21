@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -49,7 +50,7 @@ func TestShorten(t *testing.T) {
 		tokensChan <- token
 	}
 	tokenGeneratorMock := tokenGeneratorMock{tokensSeq: tokensChan}
-	h := Shorten(mockBatchSaver, tokenGeneratorMock, addr)
+	h := Shorten(mockBatchSaver, tokenGeneratorMock, google.UUIDGenerator{}, addr)
 
 	e := echo.New()
 	c := e.NewContext(req, resp)

@@ -35,7 +35,8 @@ func (s *Storage) createSchema(ctx context.Context) error {
 		(
 			id       uuid primary key,
 			token    varchar(255) not null,
-			original varchar(255) not null
+			original varchar(255) not null,
+			user_id  bigint not null 
 		)
 	`
 
@@ -74,9 +75,7 @@ func (s *Storage) createSchema(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) Add(ctx context.Context, token, url string) error {
-	shortLink := models.NewShortLink(token, url)
-
+func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	if err := s.save(ctx, shortLink); err != nil {
 		return fmt.Errorf("save short link: %w", err)
 	}
@@ -120,11 +119,11 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	}
 
 	var entries [][]any
-	columns := []string{"id", "token", "original"}
+	columns := []string{"id", "token", "original", "user_id"}
 	tableName := "short_links"
 
 	for _, shortLink := range shortLinks {
-		entries = append(entries, []any{shortLink.ID, shortLink.Token, shortLink.Original})
+		entries = append(entries, []any{shortLink.ID, shortLink.Token, shortLink.Original, shortLink.UserId})
 	}
 
 	_, err := s.dbConn.CopyFrom(
@@ -141,10 +140,40 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	return nil
 }
 
-func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
-	q := `insert into short_links (id, token, original) values ($1,$2,$3)`
+func (s *Storage) FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error) {
+	q := `select id, token, original, user_id from short_links where user_id = $1`
 
-	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original); err != nil {
+	rows, err := s.dbConn.Query(ctx, q, userId)
+	if err != nil {
+		return nil, fmt.Errorf("select short links by user: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*models.ShortLink
+	for rows.Next() {
+		var model models.ShortLink
+		if err := rows.Scan(
+			&model.ID,
+			&model.Token,
+			&model.Original,
+			&model.UserId,
+		); err != nil {
+			return nil, fmt.Errorf("scan row to struct: %w", err)
+		}
+
+		result = append(result, &model)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows err: %w", err)
+	}
+
+	return result, nil
+}
+
+func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
+	q := `insert into short_links (id, token, original, user_id) values ($1,$2,$3,$4)`
+
+	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original, shortLink.UserId); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return storage.ErrAlreadyExists

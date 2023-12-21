@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"net/http"
 	"net/http/httptest"
@@ -33,7 +34,7 @@ type mockRepo struct {
 	err error
 }
 
-func (m mockRepo) Add(ctx context.Context, _, _ string) error {
+func (m mockRepo) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return m.err
 }
 
