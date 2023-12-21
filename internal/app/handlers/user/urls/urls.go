@@ -37,8 +37,8 @@ func Urls(storage linksStorage, userContextFetcher userContextFetcher, addr stri
 		}
 
 		type respItem struct {
-			ShortUrl    string `json:"short_url"`
-			OriginalUrl string `json:"original_url"`
+			ShortURL    string `json:"short_url"`
+			OriginalURL string `json:"original_url"`
 		}
 
 		type resp []respItem
@@ -47,8 +47,8 @@ func Urls(storage linksStorage, userContextFetcher userContextFetcher, addr stri
 
 		for _, shortLink := range shortLinks {
 			response = append(response, respItem{
-				ShortUrl:    fmt.Sprintf("%s/%s", addr, shortLink.Token),
-				OriginalUrl: shortLink.Original,
+				ShortURL:    fmt.Sprintf("%s/%s", addr, shortLink.Token),
+				OriginalURL: shortLink.Original,
 			})
 		}
 

@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"errors"
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
 	"github.com/golang-jwt/jwt/v4"
@@ -11,7 +12,13 @@ import (
 
 const (
 	jwtTokenCookieName = "jwt_token"
-	wrongUserID        = -1
+)
+
+var (
+	errCookieNotFound = errors.New("cookie not found")
+	errTokenParsing   = errors.New("token parsing")
+	errInvalidJWT     = errors.New("invalid jwt")
+	errUserIDNotSet   = errors.New("user id is not set")
 )
 
 type Claims struct {
@@ -22,31 +29,35 @@ type Claims struct {
 func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := getUserIDFromCookie(c, JWTSecretKey)
-			if userID == wrongUserID {
-				userID = generateUserID()
-				if err := setCookie(c, userID, JWTSecretKey); err != nil {
-					c.Response().WriteHeader(http.StatusInternalServerError)
-					return err
+			userID, err := getUserIDFromCookie(c, JWTSecretKey)
+			if err != nil {
+				if errors.Is(err, errCookieNotFound) || errors.Is(err, errTokenParsing) || errors.Is(err, errInvalidJWT) {
+					userID = generateUserID()
+					if err := setCookie(c, userID, JWTSecretKey); err != nil {
+						c.Response().WriteHeader(http.StatusInternalServerError)
+						return err
+					}
 				}
+
+				return err
 			}
 
 			c.SetRequest(
 				c.Request().WithContext(auth.WithUserID(c.Request().Context(), userID)),
 			)
 
-			err := next(c)
+			err = next(c)
 
 			return err
 		}
 	}
 }
 
-func getUserIDFromCookie(c echo.Context, JWTSecretKey string) int {
+func getUserIDFromCookie(c echo.Context, JWTSecretKey string) (int, error) {
 	jwtCookie, err := c.Cookie(jwtTokenCookieName)
 
 	if err != nil {
-		return wrongUserID
+		return 0, errCookieNotFound
 	}
 
 	claims := &Claims{}
@@ -56,14 +67,18 @@ func getUserIDFromCookie(c echo.Context, JWTSecretKey string) int {
 	})
 
 	if err != nil {
-		return wrongUserID
+		return 0, errTokenParsing
 	}
 
 	if !token.Valid {
-		return wrongUserID
+		return 0, errInvalidJWT
 	}
 
-	return claims.UserID
+	if claims.UserID == 0 {
+		return 0, errUserIDNotSet
+	}
+
+	return claims.UserID, nil
 }
 
 func generateUserID() int {

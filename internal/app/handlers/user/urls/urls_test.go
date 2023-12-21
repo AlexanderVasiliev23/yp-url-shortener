@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	defaultErr = errors.New("test_error")
+	ErrDefault = errors.New("test_error")
 )
 
 type userContextFetcherMock struct {
@@ -50,9 +50,10 @@ func TestUrls(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name    string
-		storage storageMock
-		want    want
+		name                   string
+		storage                storageMock
+		userContextFetcherMock *userContextFetcherMock
+		want                   want
 	}{
 		{
 			name: "empty list",
@@ -81,11 +82,11 @@ func TestUrls(t *testing.T) {
 		{
 			name: "storage error",
 			storage: storageMock{
-				err: defaultErr,
+				err: ErrDefault,
 			},
 			want: want{
 				code: http.StatusInternalServerError,
-				err:  defaultErr,
+				err:  ErrDefault,
 			},
 		},
 	}

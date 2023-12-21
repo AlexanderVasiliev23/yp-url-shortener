@@ -5,8 +5,10 @@ import (
 	"errors"
 )
 
+type contextKey string
+
 const (
-	contextUserIDFieldName = "user_id"
+	contextUserIDFieldName contextKey = "user_id"
 )
 
 var (

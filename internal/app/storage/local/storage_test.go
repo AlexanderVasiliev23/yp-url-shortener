@@ -24,10 +24,10 @@ func TestAdd(t *testing.T) {
 	expectedModel := models.NewShortLink(testUserID, uuid.New(), testToken, testURL)
 
 	err := s.Add(context.Background(), expectedModel)
-
-	url, err := s.Get(context.Background(), testToken)
 	require.NoError(t, err)
 
+	url, err := s.Get(context.Background(), testToken)
+	assert.NoError(t, err)
 	assert.Equal(t, testURL, url)
 }
 
