@@ -10,22 +10,22 @@ import (
 )
 
 type linksStorage interface {
-	FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error)
+	FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error)
 }
 
 type userContextFetcher interface {
-	GetUserIdFromContext(ctx context.Context) (int, error)
+	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
 func Urls(storage linksStorage, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId, err := userContextFetcher.GetUserIdFromContext(c.Request().Context())
+		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
 		if err != nil {
 			c.Response().WriteHeader(http.StatusUnauthorized)
 			return err
 		}
 
-		shortLinks, err := storage.FindByUserId(c.Request().Context(), userId)
+		shortLinks, err := storage.FindByUserID(c.Request().Context(), userID)
 		if err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err

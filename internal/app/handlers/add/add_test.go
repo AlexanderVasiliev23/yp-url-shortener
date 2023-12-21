@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -114,7 +115,7 @@ func TestAdd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := Add(tt.repo, tt.tokGen, addr)
+			handler := Add(tt.repo, tt.tokGen, &mock.UserContextFetcherMock{}, addr)
 
 			r := httptest.NewRequest(tt.method, "/", strings.NewReader(tt.body))
 			w := httptest.NewRecorder()

@@ -18,7 +18,7 @@ import (
 const (
 	testStorageFilePath = "/tmp/testStorageFilePath.json"
 	defaultBufferSize   = 3
-	defaultUserId       = 123
+	defaultUserID       = 123
 )
 
 type mockStorage struct {
@@ -47,7 +47,7 @@ func (m mockStorage) GetTokenByURL(ctx context.Context, url string) (string, err
 	return "", nil
 }
 
-func (m mockStorage) FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error) {
+func (m mockStorage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
 	return nil, nil
 }
 
@@ -57,7 +57,7 @@ func TestStorage_RecoveringFromFileSuccess(t *testing.T) {
 	token := "mbQTUSzkAa"
 	URL := "https://ya.ru"
 
-	err := os.WriteFile(testStorageFilePath, []byte(fmt.Sprintf(`{"id":"%s","token":"%s","original":"%s","user_id":%d}`, uuid.NewString(), token, URL, defaultUserId)+"\n"), os.ModePerm)
+	err := os.WriteFile(testStorageFilePath, []byte(fmt.Sprintf(`{"id":"%s","token":"%s","original":"%s","user_id":%d}`, uuid.NewString(), token, URL, defaultUserID)+"\n"), os.ModePerm)
 	require.NoError(t, err)
 
 	s, err := New(context.Background(), mockStorage{make(map[string]string)}, google.UUIDGenerator{}, testStorageFilePath, defaultBufferSize)
@@ -84,7 +84,7 @@ func TestStorage_BufferSizeEqualsZero(t *testing.T) {
 	s, err := New(context.Background(), mockStorage{make(map[string]string)}, google.UUIDGenerator{}, testStorageFilePath, 0)
 	require.NoError(t, err)
 
-	require.NoError(t, s.Add(context.Background(), models.NewShortLinkWithoutUserId(uuid.New(), "token1", "url1")))
+	require.NoError(t, s.Add(context.Background(), models.NewShortLink(defaultUserID, uuid.New(), "token1", "url1")))
 
 	value, err := os.ReadFile(testStorageFilePath)
 	require.NoError(t, err)
@@ -98,13 +98,13 @@ func TestStorage_BufferSizeEqualsOne(t *testing.T) {
 	s, err := New(context.Background(), mockStorage{make(map[string]string)}, google.UUIDGenerator{}, testStorageFilePath, 1)
 	require.NoError(t, err)
 
-	require.NoError(t, s.Add(context.Background(), models.NewShortLinkWithoutUserId(uuid.New(), "token1", "url1")))
+	require.NoError(t, s.Add(context.Background(), models.NewShortLink(defaultUserID, uuid.New(), "token1", "url1")))
 	value, err := os.ReadFile(testStorageFilePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, 0, rowsInContent(value))
 
-	require.NoError(t, s.Add(context.Background(), models.NewShortLinkWithoutUserId(uuid.New(), "token2", "url2")))
+	require.NoError(t, s.Add(context.Background(), models.NewShortLink(defaultUserID, uuid.New(), "token2", "url2")))
 	value, err = os.ReadFile(testStorageFilePath)
 	require.NoError(t, err)
 

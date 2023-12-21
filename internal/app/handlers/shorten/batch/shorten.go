@@ -22,7 +22,11 @@ type uuidGenerator interface {
 	Generate() uuid.UUID
 }
 
-func Shorten(saver batchSaver, tokenGenerator tokenGenerator, uuidGenerator uuidGenerator, addr string) echo.HandlerFunc {
+type userContextFetcher interface {
+	GetUserIDFromContext(ctx context.Context) (int, error)
+}
+
+func Shorten(saver batchSaver, tokenGenerator tokenGenerator, uuidGenerator uuidGenerator, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		type reqItem struct {
 			CorrelationID string `json:"correlation_id"`
@@ -49,6 +53,12 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, uuidGenerator uuid
 
 		toSave := make([]*models.ShortLink, 0, len(requestItems))
 
+		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
+		if err != nil {
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
 		for _, requestItem := range requestItems {
 			token, err := tokenGenerator.Generate()
 			if err != nil {
@@ -56,7 +66,7 @@ func Shorten(saver batchSaver, tokenGenerator tokenGenerator, uuidGenerator uuid
 				return err
 			}
 
-			shortLink := models.NewShortLinkWithoutUserId(uuidGenerator.Generate(), token, requestItem.OriginalURL)
+			shortLink := models.NewShortLink(userID, uuidGenerator.Generate(), token, requestItem.OriginalURL)
 			toSave = append(toSave, shortLink)
 
 			respItem := respItem{

@@ -77,8 +77,8 @@ func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error)
 	return s.wrappedStorage.GetTokenByURL(ctx, url)
 }
 
-func (s *Storage) FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error) {
-	return s.wrappedStorage.FindByUserId(ctx, userId)
+func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
+	return s.wrappedStorage.FindByUserID(ctx, userID)
 }
 
 func (s *Storage) Dump() error {

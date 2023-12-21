@@ -10,6 +10,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/postgres"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 	"github.com/jackc/pgx/v5"
@@ -19,12 +20,13 @@ import (
 )
 
 type App struct {
-	conf           *configs.Config
-	storage        storage.Storage
-	tokenGenerator *tokengenerator.TokenGenerator
-	router         *echo.Echo
-	dbConn         *pgx.Conn
-	uuidGenerator  uuidgenerator.UUIDGenerator
+	conf               *configs.Config
+	storage            storage.Storage
+	tokenGenerator     *tokengenerator.TokenGenerator
+	router             *echo.Echo
+	dbConn             *pgx.Conn
+	uuidGenerator      uuidgenerator.UUIDGenerator
+	userContextFetcher *auth.UserContextFetcher
 }
 
 func New(ctx context.Context, conf *configs.Config) *App {
@@ -32,6 +34,7 @@ func New(ctx context.Context, conf *configs.Config) *App {
 
 	a.conf = conf
 	a.uuidGenerator = google.UUIDGenerator{}
+	a.userContextFetcher = &auth.UserContextFetcher{}
 
 	if a.conf.DatabaseDSN != "" {
 		conn, err := pgx.Connect(ctx, a.conf.DatabaseDSN)

@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	contextUserIdFieldName = "user_id"
+	contextUserIDFieldName = "user_id"
 )
 
 var (
@@ -16,8 +16,8 @@ var (
 type UserContextFetcher struct {
 }
 
-func (f *UserContextFetcher) GetUserIdFromContext(ctx context.Context) (int, error) {
-	val, ok := ctx.Value(contextUserIdFieldName).(int)
+func (f *UserContextFetcher) GetUserIDFromContext(ctx context.Context) (int, error) {
+	val, ok := ctx.Value(contextUserIDFieldName).(int)
 	if ok {
 		return val, nil
 	}
@@ -25,6 +25,6 @@ func (f *UserContextFetcher) GetUserIdFromContext(ctx context.Context) (int, err
 	return 0, ErrNotFound
 }
 
-func WithUserId(ctx context.Context, userId int) context.Context {
-	return context.WithValue(ctx, contextUserIdFieldName, userId)
+func WithUserID(ctx context.Context, userID int) context.Context {
+	return context.WithValue(ctx, contextUserIDFieldName, userID)
 }

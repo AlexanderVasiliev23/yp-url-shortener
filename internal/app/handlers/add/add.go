@@ -22,7 +22,11 @@ type tokenGenerator interface {
 	Generate() (string, error)
 }
 
-func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo.HandlerFunc {
+type userContextFetcher interface {
+	GetUserIDFromContext(ctx context.Context) (int, error)
+}
+
+func Add(repository repository, tokenGenerator tokenGenerator, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		url, err := io.ReadAll(c.Request().Body)
 		if err != nil || len(url) == 0 {
@@ -36,7 +40,13 @@ func Add(repository repository, tokenGenerator tokenGenerator, addr string) echo
 			return nil
 		}
 
-		model := models.NewShortLinkWithoutUserId(uuid.New(), token, string(url))
+		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
+		if err != nil {
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		model := models.NewShortLink(userID, uuid.New(), token, string(url))
 		if err := repository.Add(c.Request().Context(), model); err != nil {
 			if !errors.Is(err, storage.ErrAlreadyExists) {
 				c.Response().WriteHeader(http.StatusInternalServerError)

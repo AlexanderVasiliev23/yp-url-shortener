@@ -15,13 +15,13 @@ import (
 const (
 	testToken  = "test_token"
 	testURL    = "test_url"
-	testUserId = 123
+	testUserID = 123
 )
 
 func TestAdd(t *testing.T) {
 	s := New(google.UUIDGenerator{})
 
-	expectedModel := models.NewShortLinkWithoutUserId(uuid.New(), testToken, testURL)
+	expectedModel := models.NewShortLink(testUserID, uuid.New(), testToken, testURL)
 
 	err := s.Add(context.Background(), expectedModel)
 
@@ -32,7 +32,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestGetFound(t *testing.T) {
-	shortLink := models.NewShortLinkWithoutUserId(uuid.New(), testToken, testURL)
+	shortLink := models.NewShortLink(testUserID, uuid.New(), testToken, testURL)
 
 	s := New(google.UUIDGenerator{})
 	err := s.Add(context.Background(), shortLink)
@@ -52,20 +52,21 @@ func TestGetNotFound(t *testing.T) {
 	assert.Equal(t, "", url)
 }
 
-func TestFindByUserId(t *testing.T) {
+func TestFindByUserID(t *testing.T) {
 	resUUID := uuid.New()
 	s := New(mock.NewGenerator(resUUID))
 
-	shortLinkWithUser := models.NewShortLink(testUserId, resUUID, testToken, testURL)
-	err := s.Add(context.Background(), shortLinkWithUser)
+	shortLink := models.NewShortLink(testUserID, resUUID, testToken, testURL)
+	err := s.Add(context.Background(), shortLink)
 	require.NoError(t, err)
 
-	shortLinkWithoutUser := models.NewShortLinkWithoutUserId(resUUID, "anotherToken", "anotherURL")
-	err = s.Add(context.Background(), shortLinkWithoutUser)
+	anotherUserID := 234
+	shortLinkByAnotherUser := models.NewShortLink(anotherUserID, resUUID, "anotherToken", "anotherURL")
+	err = s.Add(context.Background(), shortLinkByAnotherUser)
 	require.NoError(t, err)
 
-	actual, err := s.FindByUserId(context.Background(), testUserId)
+	actual, err := s.FindByUserID(context.Background(), testUserID)
 	assert.NoError(t, err)
 
-	assert.Equal(t, []*models.ShortLink{shortLinkWithUser}, actual)
+	assert.Equal(t, []*models.ShortLink{shortLink}, actual)
 }

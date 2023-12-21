@@ -16,5 +16,5 @@ type Storage interface {
 	Get(ctx context.Context, token string) (string, error)
 	SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error
 	GetTokenByURL(ctx context.Context, url string) (string, error)
-	FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error)
+	FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error)
 }

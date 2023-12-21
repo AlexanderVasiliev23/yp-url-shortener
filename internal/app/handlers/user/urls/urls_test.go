@@ -15,7 +15,7 @@ import (
 const (
 	defaultToken    = "test_token"
 	defaultAddr     = "test_addr"
-	defaultUserId   = 1234
+	defaultUserID   = 1234
 	defaultOriginal = "test_original"
 )
 
@@ -24,12 +24,12 @@ var (
 )
 
 type userContextFetcherMock struct {
-	userId int
+	userID int
 	err    error
 }
 
-func (f userContextFetcherMock) GetUserIdFromContext(ctx context.Context) (int, error) {
-	return f.userId, f.err
+func (f userContextFetcherMock) GetUserIDFromContext(ctx context.Context) (int, error) {
+	return f.userID, f.err
 }
 
 type storageMock struct {
@@ -37,7 +37,7 @@ type storageMock struct {
 	err    error
 }
 
-func (s storageMock) FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error) {
+func (s storageMock) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
 	return s.result, s.err
 }
 
@@ -95,7 +95,7 @@ func TestUrls(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			h := Urls(tc.storage, userContextFetcherMock{userId: defaultUserId}, defaultAddr)
+			h := Urls(tc.storage, userContextFetcherMock{userID: defaultUserID}, defaultAddr)
 
 			e := echo.New()
 			c := e.NewContext(request, recorder)

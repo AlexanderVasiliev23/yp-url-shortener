@@ -11,7 +11,7 @@ import (
 
 const (
 	jwtTokenCookieName = "jwt_token"
-	wrongUserId        = -1
+	wrongUserID        = -1
 )
 
 type Claims struct {
@@ -22,17 +22,17 @@ type Claims struct {
 func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userId := getUserIdFromCookie(c, JWTSecretKey)
-			if userId == wrongUserId {
-				userId = generateUserId()
-				if err := setCookie(c, userId, JWTSecretKey); err != nil {
+			userID := getUserIDFromCookie(c, JWTSecretKey)
+			if userID == wrongUserID {
+				userID = generateUserID()
+				if err := setCookie(c, userID, JWTSecretKey); err != nil {
 					c.Response().WriteHeader(http.StatusInternalServerError)
 					return err
 				}
 			}
 
 			c.SetRequest(
-				c.Request().WithContext(auth.WithUserId(c.Request().Context(), userId)),
+				c.Request().WithContext(auth.WithUserID(c.Request().Context(), userID)),
 			)
 
 			err := next(c)
@@ -42,11 +42,11 @@ func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
 	}
 }
 
-func getUserIdFromCookie(c echo.Context, JWTSecretKey string) int {
+func getUserIDFromCookie(c echo.Context, JWTSecretKey string) int {
 	jwtCookie, err := c.Cookie(jwtTokenCookieName)
 
 	if err != nil {
-		return wrongUserId
+		return wrongUserID
 	}
 
 	claims := &Claims{}
@@ -56,22 +56,22 @@ func getUserIdFromCookie(c echo.Context, JWTSecretKey string) int {
 	})
 
 	if err != nil {
-		return wrongUserId
+		return wrongUserID
 	}
 
 	if !token.Valid {
-		return wrongUserId
+		return wrongUserID
 	}
 
 	return claims.UserID
 }
 
-func generateUserId() int {
+func generateUserID() int {
 	return int(time.Now().UnixNano())
 }
 
-func setCookie(c echo.Context, userId int, JWTSecretKey string) error {
-	token, err := buildJWTString(userId, JWTSecretKey)
+func setCookie(c echo.Context, userID int, JWTSecretKey string) error {
+	token, err := buildJWTString(userID, JWTSecretKey)
 	if err != nil {
 		return fmt.Errorf("build JWT string: %w", err)
 	}
@@ -83,9 +83,9 @@ func setCookie(c echo.Context, userId int, JWTSecretKey string) error {
 	return nil
 }
 
-func buildJWTString(userId int, JWTSecretKey string) (string, error) {
+func buildJWTString(userID int, JWTSecretKey string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
-		UserID: userId,
+		UserID: userID,
 	})
 
 	tokenString, err := token.SignedString([]byte(JWTSecretKey))

@@ -20,7 +20,7 @@ type Storage struct {
 
 	tokenToShortLinkMap  map[string]*models.ShortLink
 	urlToShortLinkMap    map[string]*models.ShortLink
-	userIdToShortLinkMap map[int][]*models.ShortLink
+	userIDToShortLinkMap map[int][]*models.ShortLink
 }
 
 func New(uuidGenerator uuidgenerator.UUIDGenerator) *Storage {
@@ -28,7 +28,7 @@ func New(uuidGenerator uuidgenerator.UUIDGenerator) *Storage {
 		uuidGenerator:        uuidGenerator,
 		tokenToShortLinkMap:  make(map[string]*models.ShortLink),
 		urlToShortLinkMap:    make(map[string]*models.ShortLink),
-		userIdToShortLinkMap: make(map[int][]*models.ShortLink),
+		userIDToShortLinkMap: make(map[int][]*models.ShortLink),
 	}
 }
 
@@ -39,7 +39,7 @@ func (s Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 
 	s.tokenToShortLinkMap[shortLink.Token] = shortLink
 	s.urlToShortLinkMap[shortLink.Original] = shortLink
-	s.userIdToShortLinkMap[shortLink.UserId] = append(s.userIdToShortLinkMap[shortLink.UserId], shortLink)
+	s.userIDToShortLinkMap[shortLink.UserID] = append(s.userIDToShortLinkMap[shortLink.UserID], shortLink)
 
 	return nil
 }
@@ -72,6 +72,6 @@ func (s Storage) GetTokenByURL(ctx context.Context, url string) (string, error) 
 	return shortLink.Token, nil
 }
 
-func (s Storage) FindByUserId(ctx context.Context, userId int) ([]*models.ShortLink, error) {
-	return s.userIdToShortLinkMap[userId], nil
+func (s Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
+	return s.userIDToShortLinkMap[userID], nil
 }

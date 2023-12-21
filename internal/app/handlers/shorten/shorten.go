@@ -25,7 +25,11 @@ type tokenGenerator interface {
 	Generate() (string, error)
 }
 
-func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) echo.HandlerFunc {
+type userContextFetcher interface {
+	GetUserIDFromContext(ctx context.Context) (int, error)
+}
+
+func Shorten(repository repository, tokenGenerator tokenGenerator, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := struct {
 			URL string
@@ -53,7 +57,12 @@ func Shorten(repository repository, tokenGenerator tokenGenerator, addr string) 
 
 		c.Response().Header().Set("Content-Type", "application/json")
 
-		model := models.NewShortLinkWithoutUserId(uuid.New(), token, req.URL)
+		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
+		if err != nil {
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		model := models.NewShortLink(userID, uuid.New(), token, req.URL)
 		if err := repository.Add(c.Request().Context(), model); err != nil {
 			if !errors.Is(err, storage.ErrAlreadyExists) {
 				c.Response().WriteHeader(http.StatusInternalServerError)
