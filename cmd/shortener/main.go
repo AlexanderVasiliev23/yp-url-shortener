@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	conf := configs.Configure()
+	conf := configs.MustConfigure()
 
 	if err := logger.Init(); err != nil {
 		panic(err)

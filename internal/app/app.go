@@ -13,7 +13,9 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
+	zap "github.com/jackc/pgx-zap"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
@@ -36,8 +38,22 @@ func New(ctx context.Context, conf *configs.Config) *App {
 	a.uuidGenerator = google.UUIDGenerator{}
 	a.userContextFetcher = &auth.UserContextFetcher{}
 
+	l := zap.NewLogger(logger.Log.Desugar())
+
 	if a.conf.DatabaseDSN != "" {
-		conn, err := pgx.Connect(ctx, a.conf.DatabaseDSN)
+		dbConfig, err := pgx.ParseConfig(a.conf.DatabaseDSN)
+		if err != nil {
+			logger.Log.Fatalln("parse db dns for config:", err.Error())
+			os.Exit(1)
+		}
+		if a.conf.Debug {
+			dbConfig.Tracer = &tracelog.TraceLog{
+				Logger:   l,
+				LogLevel: tracelog.LogLevelTrace,
+			}
+		}
+
+		conn, err := pgx.ConnectConfig(ctx, dbConfig)
 		if err != nil {
 			logger.Log.Fatalln("connect to db:", err.Error())
 			os.Exit(1)

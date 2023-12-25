@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"strings"
 )
 
 var _ storage.Storage = (*Storage)(nil)
@@ -179,9 +178,9 @@ func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.Short
 }
 
 func (s *Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
-	q := `update short_links set deleted_at = now() where user_id = $1 and token in ($2)`
+	q := `update short_links set deleted_at = now() where user_id = $1 and token = ANY ($2)`
 
-	if _, err := s.dbConn.Exec(ctx, q, userID, strings.Join(tokens, ",")); err != nil {
+	if _, err := s.dbConn.Exec(ctx, q, userID, tokens); err != nil {
 		return fmt.Errorf("exec delete tokens query: %w", err)
 	}
 
