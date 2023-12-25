@@ -1,8 +1,9 @@
-package delete
+package deleteurl
 
 import (
 	"context"
 	"encoding/json"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -37,6 +38,8 @@ func Delete(storage linksStorage, userContextFetcher userContextFetcher) echo.Ha
 	}
 }
 
-func deleteTokensByUser(userId int, tokens []string, storage linksStorage) {
-
+func deleteTokensByUser(userID int, tokens []string, storage linksStorage) {
+	if err := storage.DeleteTokens(context.Background(), userID, tokens); err != nil {
+		logger.Log.Errorf("failed to delete tokens: %v", err)
+	}
 }

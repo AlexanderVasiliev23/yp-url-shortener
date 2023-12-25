@@ -6,6 +6,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/ping"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten/batch"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/deleteurl"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/list"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/jwt"
@@ -35,6 +36,7 @@ func (a *App) configureRouter() *echo.Echo {
 		jwt.Auth(a.conf.JWTSecretKey),
 	)
 	g.GET("/urls", list.List(a.storage, a.userContextFetcher, a.conf.BaseAddress))
+	g.DELETE("/urls", deleteurl.Delete(a.storage, a.userContextFetcher))
 
 	return e
 }

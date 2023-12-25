@@ -17,7 +17,7 @@ import (
 const (
 	defaultToken    = "default_test_token"
 	defaultSavedURL = "default_saved_url"
-	defaultUserId   = 123
+	defaultUserID   = 123
 )
 
 type mockRepo struct {
@@ -44,7 +44,7 @@ func TestGet(t *testing.T) {
 	}{
 		{
 			name:   "success",
-			repo:   mockRepo{url: models.NewShortLink(defaultUserId, uuid.New(), defaultToken, defaultSavedURL)},
+			repo:   mockRepo{url: models.NewShortLink(defaultUserID, uuid.New(), defaultToken, defaultSavedURL)},
 			method: http.MethodGet,
 			token:  defaultToken,
 			want: want{
