@@ -9,15 +9,16 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var _ storage.Storage = (*Storage)(nil)
 
 type Storage struct {
-	dbConn *pgx.Conn
+	dbConn *pgxpool.Pool
 }
 
-func New(ctx context.Context, dbConn *pgx.Conn) (*Storage, error) {
+func New(ctx context.Context, dbConn *pgxpool.Pool) (*Storage, error) {
 	s := &Storage{
 		dbConn: dbConn,
 	}
@@ -171,7 +172,7 @@ func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.Short
 		result = append(result, &model)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows err: %w", err)
+		return nil, fmt.Errorf("find by user id: rows err: %w", err)
 	}
 
 	return result, nil
@@ -208,8 +209,8 @@ func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, toke
 		res = append(res, token)
 	}
 
-	if rows.Err() != nil {
-		return nil, fmt.Errorf("rows err: %w", err)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("filter only this user tokens: rows err: %w", err)
 	}
 
 	return res, nil

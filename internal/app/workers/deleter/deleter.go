@@ -56,7 +56,6 @@ func (w DeleteWorker) Consume(ch <-chan DeleteTask) {
 				}
 				batch = batch[:0]
 			}
-		default:
 		}
 	}
 }

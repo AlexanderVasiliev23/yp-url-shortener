@@ -15,7 +15,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 	zap "github.com/jackc/pgx-zap"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -27,7 +27,7 @@ type App struct {
 	storage            storage.Storage
 	tokenGenerator     *tokengenerator.TokenGenerator
 	router             *echo.Echo
-	dbConn             *pgx.Conn
+	dbConn             *pgxpool.Pool
 	uuidGenerator      uuidgenerator.UUIDGenerator
 	userContextFetcher *auth.UserContextFetcher
 
@@ -45,24 +45,24 @@ func New(ctx context.Context, conf *configs.Config) *App {
 	l := zap.NewLogger(logger.Log.Desugar())
 
 	if a.conf.DatabaseDSN != "" {
-		dbConfig, err := pgx.ParseConfig(a.conf.DatabaseDSN)
+		dbConfig, err := pgxpool.ParseConfig(a.conf.DatabaseDSN)
 		if err != nil {
 			logger.Log.Fatalln("parse db dns for config:", err.Error())
 			os.Exit(1)
 		}
 		if a.conf.Debug {
-			dbConfig.Tracer = &tracelog.TraceLog{
+			dbConfig.ConnConfig.Tracer = &tracelog.TraceLog{
 				Logger:   l,
 				LogLevel: tracelog.LogLevelTrace,
 			}
 		}
 
-		conn, err := pgx.ConnectConfig(ctx, dbConfig)
+		pool, err := pgxpool.NewWithConfig(ctx, dbConfig)
 		if err != nil {
 			logger.Log.Fatalln("connect to db:", err.Error())
 			os.Exit(1)
 		}
-		a.dbConn = conn
+		a.dbConn = pool
 	}
 
 	storageObj, err := a.buildStorage(ctx)
@@ -121,7 +121,7 @@ func (a *App) Shutdown() error {
 	}
 
 	if a.dbConn != nil {
-		a.dbConn.Close(context.Background())
+		a.dbConn.Close()
 	}
 
 	close(a.deleteByTokenCh)
