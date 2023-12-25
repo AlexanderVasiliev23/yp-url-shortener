@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"strings"
 )
 
 var _ storage.Storage = (*Storage)(nil)
@@ -36,7 +37,8 @@ func (s *Storage) createSchema(ctx context.Context) error {
 			id       uuid primary key,
 			token    varchar(255) not null,
 			original varchar(255) not null,
-			user_id  bigint not null 
+			user_id  bigint not null,
+			deleted_at timestamp null
 		)
 	`
 
@@ -83,17 +85,23 @@ func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return nil
 }
 
-func (s *Storage) Get(ctx context.Context, token string) (string, error) {
+func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
 	q := `select original from short_links where token = $1;`
 
-	var link string
+	link := new(models.ShortLink)
 
-	if err := s.dbConn.QueryRow(ctx, q, token).Scan(&link); err != nil {
+	if err := s.dbConn.QueryRow(ctx, q, token).Scan(
+		&link.ID,
+		&link.Token,
+		&link.Original,
+		&link.UserID,
+		&link.DeletedAt,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", storage.ErrNotFound
+			return nil, storage.ErrNotFound
 		}
 
-		return "", fmt.Errorf("query link by token: %w", err)
+		return nil, fmt.Errorf("query link by token: %w", err)
 	}
 
 	return link, nil
@@ -168,6 +176,16 @@ func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.Short
 	}
 
 	return result, nil
+}
+
+func (s *Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
+	q := `update short_links set deleted_at = now() where user_id = $2 and token in ($3)`
+
+	if _, err := s.dbConn.Exec(ctx, q, userID, strings.Join(tokens, ",")); err != nil {
+
+	}
+
+	return nil
 }
 
 func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {

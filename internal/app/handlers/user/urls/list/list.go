@@ -1,4 +1,4 @@
-package urls
+package list
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
-func Urls(storage linksStorage, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
+func List(storage linksStorage, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
 		if err != nil {

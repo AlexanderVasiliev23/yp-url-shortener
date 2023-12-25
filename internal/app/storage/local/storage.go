@@ -44,13 +44,13 @@ func (s Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return nil
 }
 
-func (s Storage) Get(ctx context.Context, token string) (string, error) {
+func (s Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
 	shortLink, ok := s.tokenToShortLinkMap[token]
 	if ok {
-		return shortLink.Original, nil
+		return shortLink, nil
 	}
 
-	return "", ErrURLNotFound
+	return nil, ErrURLNotFound
 }
 
 func (s Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
@@ -74,4 +74,20 @@ func (s Storage) GetTokenByURL(ctx context.Context, url string) (string, error) 
 
 func (s Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
 	return s.userIDToShortLinkMap[userID], nil
+}
+
+func (s Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
+	for _, token := range tokens {
+		shortLink, ok := s.tokenToShortLinkMap[token]
+		if !ok {
+			continue
+		}
+		if shortLink.UserID != userID {
+			continue
+		}
+
+		shortLink.Delete()
+	}
+
+	return nil
 }

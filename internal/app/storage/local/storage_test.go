@@ -26,9 +26,9 @@ func TestAdd(t *testing.T) {
 	err := s.Add(context.Background(), expectedModel)
 	require.NoError(t, err)
 
-	url, err := s.Get(context.Background(), testToken)
+	shortLink, err := s.Get(context.Background(), testToken)
 	assert.NoError(t, err)
-	assert.Equal(t, testURL, url)
+	assert.Equal(t, testURL, shortLink.Original)
 }
 
 func TestGetFound(t *testing.T) {
@@ -41,7 +41,7 @@ func TestGetFound(t *testing.T) {
 	url, err := s.Get(context.Background(), shortLink.Token)
 
 	require.NoError(t, err)
-	assert.Equal(t, testURL, url)
+	assert.Equal(t, testURL, url.Original)
 }
 
 func TestGetNotFound(t *testing.T) {
@@ -49,7 +49,7 @@ func TestGetNotFound(t *testing.T) {
 	url, err := s.Get(context.Background(), testToken)
 
 	assert.ErrorIs(t, err, ErrURLNotFound)
-	assert.Equal(t, "", url)
+	assert.Nil(t, url)
 }
 
 func TestFindByUserID(t *testing.T) {

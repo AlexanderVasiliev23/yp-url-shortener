@@ -1,4 +1,4 @@
-package urls
+package list
 
 import (
 	"context"
@@ -96,7 +96,7 @@ func TestUrls(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			h := Urls(tc.storage, userContextFetcherMock{userID: defaultUserID}, defaultAddr)
+			h := List(tc.storage, userContextFetcherMock{userID: defaultUserID}, defaultAddr)
 
 			e := echo.New()
 			c := e.NewContext(request, recorder)

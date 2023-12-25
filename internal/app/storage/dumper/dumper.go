@@ -59,7 +59,7 @@ func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return nil
 }
 
-func (s *Storage) Get(ctx context.Context, token string) (string, error) {
+func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
 	return s.wrappedStorage.Get(ctx, token)
 }
 
@@ -119,4 +119,8 @@ func (s *Storage) recoverDataFromFile(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
+	return s.wrappedStorage.DeleteTokens(ctx, userID, tokens)
 }
