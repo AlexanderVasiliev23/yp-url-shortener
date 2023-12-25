@@ -76,7 +76,22 @@ func (s Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortL
 	return s.userIDToShortLinkMap[userID], nil
 }
 
-func (s Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
+func (s Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	for _, token := range tokens {
+		shortLink, ok := s.tokenToShortLinkMap[token]
+		if !ok {
+			continue
+		}
+
+		shortLink.Delete()
+	}
+
+	return nil
+}
+
+func (s Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	result := make([]string, 0, len(tokens))
+
 	for _, token := range tokens {
 		shortLink, ok := s.tokenToShortLinkMap[token]
 		if !ok {
@@ -85,9 +100,8 @@ func (s Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) 
 		if shortLink.UserID != userID {
 			continue
 		}
-
-		shortLink.Delete()
+		result = append(result, token)
 	}
 
-	return nil
+	return result, nil
 }

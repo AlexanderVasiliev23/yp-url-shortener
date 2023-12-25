@@ -177,14 +177,42 @@ func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.Short
 	return result, nil
 }
 
-func (s *Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
-	q := `update short_links set deleted_at = now() where user_id = $1 and token = ANY ($2)`
+func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	q := `update short_links set deleted_at = now() where token = ANY ($1)`
 
-	if _, err := s.dbConn.Exec(ctx, q, userID, tokens); err != nil {
+	if _, err := s.dbConn.Exec(ctx, q, tokens); err != nil {
 		return fmt.Errorf("exec delete tokens query: %w", err)
 	}
 
 	return nil
+}
+
+func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	q := `
+		select token
+		from short_links
+		where user_id = $1 and token = any($2);
+	`
+
+	rows, err := s.dbConn.Query(ctx, q, userID, tokens)
+	if err != nil {
+		return nil, fmt.Errorf("select tokens by user and tokens: %w", err)
+	}
+
+	res := make([]string, 0, len(tokens))
+	for rows.Next() {
+		var token string
+		if err := rows.Scan(&token); err != nil {
+			return nil, fmt.Errorf("scan token: %w", err)
+		}
+		res = append(res, token)
+	}
+
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("rows err: %w", err)
+	}
+
+	return res, nil
 }
 
 func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {

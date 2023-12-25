@@ -121,6 +121,10 @@ func (s *Storage) recoverDataFromFile(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
-	return s.wrappedStorage.DeleteTokens(ctx, userID, tokens)
+func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	return s.wrappedStorage.DeleteByTokens(ctx, tokens)
+}
+
+func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	return s.wrappedStorage.FilterOnlyThisUserTokens(ctx, userID, tokens)
 }

@@ -3,6 +3,7 @@ package deleteurl
 import (
 	"context"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -16,8 +17,8 @@ type storageMock struct {
 	err    error
 }
 
-func (m storageMock) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
-	return nil
+func (m storageMock) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	return nil, nil
 }
 
 type userContextFetcherMock struct {
@@ -33,7 +34,9 @@ func TestDelete(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", strings.NewReader(`["token1", "token2"]`))
 
-	h := Delete(storageMock{}, userContextFetcherMock{})
+	ch := make(chan<- deleter.DeleteTask, 1)
+
+	h := Delete(storageMock{}, userContextFetcherMock{}, ch)
 
 	e := echo.New()
 	c := e.NewContext(req, recorder)

@@ -13,6 +13,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 	zap "github.com/jackc/pgx-zap"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/tracelog"
@@ -29,11 +30,14 @@ type App struct {
 	dbConn             *pgx.Conn
 	uuidGenerator      uuidgenerator.UUIDGenerator
 	userContextFetcher *auth.UserContextFetcher
+
+	deleteByTokenCh chan deleter.DeleteTask
 }
 
 func New(ctx context.Context, conf *configs.Config) *App {
 	a := new(App)
 
+	a.deleteByTokenCh = make(chan deleter.DeleteTask)
 	a.conf = conf
 	a.uuidGenerator = google.UUIDGenerator{}
 	a.userContextFetcher = &auth.UserContextFetcher{}
@@ -101,6 +105,13 @@ func (a *App) Run() error {
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 }
 
+func (a *App) RunWorkers() error {
+	deleteWorker := deleter.NewDeleteWorker(a.storage)
+	deleteWorker.Consume(a.deleteByTokenCh)
+
+	return nil
+}
+
 func (a *App) Shutdown() error {
 	s, ok := a.storage.(*dumper.Storage)
 	if ok {
@@ -112,6 +123,8 @@ func (a *App) Shutdown() error {
 	if a.dbConn != nil {
 		a.dbConn.Close(context.Background())
 	}
+
+	close(a.deleteByTokenCh)
 
 	return nil
 }

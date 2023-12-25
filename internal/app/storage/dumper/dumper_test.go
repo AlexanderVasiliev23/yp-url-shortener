@@ -51,8 +51,12 @@ func (m mockStorage) FindByUserID(ctx context.Context, userID int) ([]*models.Sh
 	return nil, nil
 }
 
-func (m mockStorage) DeleteTokens(ctx context.Context, userID int, tokens []string) error {
+func (m mockStorage) DeleteByTokens(ctx context.Context, tokens []string) error {
 	return nil
+}
+
+func (m mockStorage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	return nil, nil
 }
 
 func TestStorage_RecoveringFromFileSuccess(t *testing.T) {

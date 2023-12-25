@@ -36,7 +36,7 @@ func (a *App) configureRouter() *echo.Echo {
 		jwt.Auth(a.conf.JWTSecretKey),
 	)
 	g.GET("/urls", list.List(a.storage, a.userContextFetcher, a.conf.BaseAddress))
-	g.DELETE("/urls", deleteurl.Delete(a.storage, a.userContextFetcher))
+	g.DELETE("/urls", deleteurl.Delete(a.storage, a.userContextFetcher, a.deleteByTokenCh))
 
 	return e
 }

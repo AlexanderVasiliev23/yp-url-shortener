@@ -27,6 +27,7 @@ func main() {
 	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	g, gCtx := errgroup.WithContext(ctx)
+	g.Go(application.RunWorkers)
 	g.Go(application.Run)
 
 	select {

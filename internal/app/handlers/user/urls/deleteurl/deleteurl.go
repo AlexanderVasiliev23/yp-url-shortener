@@ -3,20 +3,20 @@ package deleteurl
 import (
 	"context"
 	"encoding/json"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
 type linksStorage interface {
-	DeleteTokens(ctx context.Context, userID int, tokens []string) error
+	FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error)
 }
 
 type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
-func Delete(storage linksStorage, userContextFetcher userContextFetcher) echo.HandlerFunc {
+func Delete(linksStorage linksStorage, userContextFetcher userContextFetcher, deleteByTokenCh chan<- deleter.DeleteTask) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
 		if err != nil {
@@ -30,16 +30,18 @@ func Delete(storage linksStorage, userContextFetcher userContextFetcher) echo.Ha
 			return err
 		}
 
-		deleteTokensByUser(userID, reqBody, storage)
+		tokens, err := linksStorage.FilterOnlyThisUserTokens(c.Request().Context(), userID, reqBody)
+		if err != nil {
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+
+		deleteByTokenCh <- deleter.DeleteTask{
+			Tokens: tokens,
+		}
 
 		c.Response().WriteHeader(http.StatusAccepted)
 
 		return nil
-	}
-}
-
-func deleteTokensByUser(userID int, tokens []string, storage linksStorage) {
-	if err := storage.DeleteTokens(context.Background(), userID, tokens); err != nil {
-		logger.Log.Errorf("failed to delete tokens: %v", err)
 	}
 }
