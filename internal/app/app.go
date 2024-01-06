@@ -90,7 +90,7 @@ func (a *App) buildStorage(ctx context.Context) (storage.Storage, error) {
 	if a.conf.StorageFilePath != "" {
 		s, err := dumper.New(ctx, local.New(a.uuidGenerator), a.uuidGenerator, a.conf.StorageFilePath, a.conf.FileStorageBufferSize)
 		if err != nil {
-			return nil, fmt.Errorf("creating file dumpres storage: %w", err)
+			return nil, fmt.Errorf("creating file dumper storage: %w", err)
 		}
 
 		return s, nil

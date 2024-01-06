@@ -37,7 +37,7 @@ func New(ctx context.Context, wrappedStorage storage.Storage, uuidGenerator uuid
 	}
 
 	if err := s.recoverDataFromFile(ctx); err != nil {
-		return nil, fmt.Errorf("recovering storage data from file %w", err)
+		return nil, fmt.Errorf("recovering storage data from file: %w", err)
 	}
 
 	return s, nil
