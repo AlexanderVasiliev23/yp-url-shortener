@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	defaultErr = errors.New("test_error")
+	errDefault = errors.New("test_error")
 )
 
 type mockTokenGenerator struct {
@@ -89,7 +89,7 @@ func TestAdd(t *testing.T) {
 		},
 		{
 			name:               "repo returns an error on adding",
-			repo:               mockRepo{addingErr: defaultErr},
+			repo:               mockRepo{addingErr: errDefault},
 			tokGen:             mockTokenGenerator{},
 			userContextFetcher: &mock.UserContextFetcherMock{},
 			method:             http.MethodPost,
@@ -101,7 +101,7 @@ func TestAdd(t *testing.T) {
 		},
 		{
 			name:               "repo returns an error on getting by token",
-			repo:               mockRepo{addingErr: storage.ErrAlreadyExists, getTokenErr: defaultErr},
+			repo:               mockRepo{addingErr: storage.ErrAlreadyExists, getTokenErr: errDefault},
 			tokGen:             mockTokenGenerator{},
 			userContextFetcher: &mock.UserContextFetcherMock{},
 			method:             http.MethodPost,
@@ -114,7 +114,7 @@ func TestAdd(t *testing.T) {
 		{
 			name:               "token generator error",
 			repo:               mockRepo{},
-			tokGen:             mockTokenGenerator{err: defaultErr},
+			tokGen:             mockTokenGenerator{err: errDefault},
 			userContextFetcher: &mock.UserContextFetcherMock{},
 			method:             http.MethodPost,
 			body:               "test_url",
@@ -139,7 +139,7 @@ func TestAdd(t *testing.T) {
 			name:               "fetching userID error",
 			repo:               mockRepo{},
 			tokGen:             mockTokenGenerator{},
-			userContextFetcher: &mock.UserContextFetcherMock{Err: defaultErr},
+			userContextFetcher: &mock.UserContextFetcherMock{Err: errDefault},
 			method:             http.MethodPost,
 			body:               "test_url",
 			want: want{
