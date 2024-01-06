@@ -3,8 +3,13 @@ check: vet test
 vet:
 	go vet ./...
 
+test-with-coverage: test coverage
+
 test:
-	go test ./...
+	go test -coverprofile=coverage.out ./...
+
+coverage:
+	 go tool cover -html=coverage.out -o coverage.html
 
 golangci-lint-run:
 	docker run --rm \

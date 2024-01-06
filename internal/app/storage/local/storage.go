@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
 )
 
 var _ storage.Storage = (*Storage)(nil)
@@ -15,40 +16,46 @@ var (
 )
 
 type Storage struct {
-	tokenToURLMap map[string]string
-	URLToTokenMap map[string]string
+	uuidGenerator uuidgenerator.UUIDGenerator
+
+	tokenToShortLinkMap  map[string]*models.ShortLink
+	urlToShortLinkMap    map[string]*models.ShortLink
+	userIDToShortLinkMap map[int][]*models.ShortLink
 }
 
-func New() *Storage {
+func New(uuidGenerator uuidgenerator.UUIDGenerator) *Storage {
 	return &Storage{
-		tokenToURLMap: make(map[string]string),
-		URLToTokenMap: make(map[string]string),
+		uuidGenerator:        uuidGenerator,
+		tokenToShortLinkMap:  make(map[string]*models.ShortLink),
+		urlToShortLinkMap:    make(map[string]*models.ShortLink),
+		userIDToShortLinkMap: make(map[int][]*models.ShortLink),
 	}
 }
 
-func (s Storage) Add(ctx context.Context, token, url string) error {
-	if _, ok := s.URLToTokenMap[url]; ok {
+func (s Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
+	if _, ok := s.urlToShortLinkMap[shortLink.Original]; ok {
 		return storage.ErrAlreadyExists
 	}
 
-	s.tokenToURLMap[token] = url
-	s.URLToTokenMap[url] = token
+	s.tokenToShortLinkMap[shortLink.Token] = shortLink
+	s.urlToShortLinkMap[shortLink.Original] = shortLink
+	s.userIDToShortLinkMap[shortLink.UserID] = append(s.userIDToShortLinkMap[shortLink.UserID], shortLink)
 
 	return nil
 }
 
-func (s Storage) Get(ctx context.Context, token string) (string, error) {
-	url, ok := s.tokenToURLMap[token]
+func (s Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
+	shortLink, ok := s.tokenToShortLinkMap[token]
 	if ok {
-		return url, nil
+		return shortLink, nil
 	}
 
-	return "", ErrURLNotFound
+	return nil, ErrURLNotFound
 }
 
 func (s Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
 	for _, shortLink := range shortLinks {
-		if err := s.Add(ctx, shortLink.Token, shortLink.Original); err != nil {
+		if err := s.Add(ctx, shortLink); err != nil {
 			return fmt.Errorf("add one short link: %w", err)
 		}
 	}
@@ -57,10 +64,44 @@ func (s Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) 
 }
 
 func (s Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
-	token, ok := s.URLToTokenMap[url]
+	shortLink, ok := s.urlToShortLinkMap[url]
 	if !ok {
 		return "", storage.ErrNotFound
 	}
 
-	return token, nil
+	return shortLink.Token, nil
+}
+
+func (s Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
+	return s.userIDToShortLinkMap[userID], nil
+}
+
+func (s Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	for _, token := range tokens {
+		shortLink, ok := s.tokenToShortLinkMap[token]
+		if !ok {
+			continue
+		}
+
+		shortLink.Delete()
+	}
+
+	return nil
+}
+
+func (s Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	result := make([]string, 0, len(tokens))
+
+	for _, token := range tokens {
+		shortLink, ok := s.tokenToShortLinkMap[token]
+		if !ok {
+			continue
+		}
+		if shortLink.UserID != userID {
+			continue
+		}
+		result = append(result, token)
+	}
+
+	return result, nil
 }

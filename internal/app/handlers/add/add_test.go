@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -20,6 +22,10 @@ const (
 	defaultToken = "default_test_token"
 )
 
+var (
+	errDefault = errors.New("test_error")
+)
+
 type mockTokenGenerator struct {
 	token string
 	err   error
@@ -30,15 +36,16 @@ func (m mockTokenGenerator) Generate() (string, error) {
 }
 
 type mockRepo struct {
-	err error
+	addingErr   error
+	getTokenErr error
 }
 
-func (m mockRepo) Add(ctx context.Context, _, _ string) error {
-	return m.err
+func (m mockRepo) Add(ctx context.Context, shortLink *models.ShortLink) error {
+	return m.addingErr
 }
 
 func (m mockRepo) GetTokenByURL(ctx context.Context, url string) (string, error) {
-	return defaultToken, nil
+	return defaultToken, m.getTokenErr
 }
 
 func TestAdd(t *testing.T) {
@@ -48,72 +55,101 @@ func TestAdd(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		repo   mockRepo
-		tokGen mockTokenGenerator
-		method string
-		body   string
-		want   want
+		name               string
+		repo               mockRepo
+		tokGen             mockTokenGenerator
+		userContextFetcher userContextFetcher
+		method             string
+		body               string
+		want               want
 	}{
 		{
-			name:   "success",
-			repo:   mockRepo{},
-			tokGen: mockTokenGenerator{token: defaultToken},
-			method: http.MethodPost,
-			body:   "test_url",
+			name:               "success",
+			repo:               mockRepo{},
+			tokGen:             mockTokenGenerator{token: defaultToken},
+			userContextFetcher: &mock.UserContextFetcherMock{},
+			method:             http.MethodPost,
+			body:               "test_url",
 			want: want{
 				code: http.StatusCreated,
 				body: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
 		},
 		{
-			name:   "empty body",
-			repo:   mockRepo{},
-			tokGen: mockTokenGenerator{},
-			method: http.MethodPost,
-			body:   "",
+			name:               "empty body",
+			repo:               mockRepo{},
+			tokGen:             mockTokenGenerator{},
+			userContextFetcher: &mock.UserContextFetcherMock{},
+			method:             http.MethodPost,
+			body:               "",
 			want: want{
 				code: http.StatusBadRequest,
 				body: "",
 			},
 		},
 		{
-			name:   "repo returns an error",
-			repo:   mockRepo{err: errors.New("")},
-			tokGen: mockTokenGenerator{},
-			method: http.MethodPost,
-			body:   "test_url",
+			name:               "repo returns an error on adding",
+			repo:               mockRepo{addingErr: errDefault},
+			tokGen:             mockTokenGenerator{},
+			userContextFetcher: &mock.UserContextFetcherMock{},
+			method:             http.MethodPost,
+			body:               "test_url",
 			want: want{
 				code: http.StatusInternalServerError,
 				body: "",
 			},
 		},
 		{
-			name:   "token generator error",
-			repo:   mockRepo{},
-			tokGen: mockTokenGenerator{err: errors.New("")},
-			method: http.MethodPost,
-			body:   "test_url",
+			name:               "repo returns an error on getting by token",
+			repo:               mockRepo{addingErr: storage.ErrAlreadyExists, getTokenErr: errDefault},
+			tokGen:             mockTokenGenerator{},
+			userContextFetcher: &mock.UserContextFetcherMock{},
+			method:             http.MethodPost,
+			body:               "test_url",
 			want: want{
 				code: http.StatusInternalServerError,
 				body: "",
 			},
 		},
 		{
-			name:   "already exists",
-			repo:   mockRepo{err: storage.ErrAlreadyExists},
-			tokGen: mockTokenGenerator{},
-			method: http.MethodPost,
-			body:   "test_url",
+			name:               "token generator error",
+			repo:               mockRepo{},
+			tokGen:             mockTokenGenerator{err: errDefault},
+			userContextFetcher: &mock.UserContextFetcherMock{},
+			method:             http.MethodPost,
+			body:               "test_url",
+			want: want{
+				code: http.StatusInternalServerError,
+				body: "",
+			},
+		},
+		{
+			name:               "already exists",
+			repo:               mockRepo{addingErr: storage.ErrAlreadyExists},
+			tokGen:             mockTokenGenerator{},
+			userContextFetcher: &mock.UserContextFetcherMock{},
+			method:             http.MethodPost,
+			body:               "test_url",
 			want: want{
 				code: http.StatusConflict,
 				body: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
 		},
+		{
+			name:               "fetching userID error",
+			repo:               mockRepo{},
+			tokGen:             mockTokenGenerator{},
+			userContextFetcher: &mock.UserContextFetcherMock{Err: errDefault},
+			method:             http.MethodPost,
+			body:               "test_url",
+			want: want{
+				code: http.StatusInternalServerError,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := Add(tt.repo, tt.tokGen, addr)
+			handler := NewHandler(tt.repo, tt.tokGen, tt.userContextFetcher, addr).Add
 
 			r := httptest.NewRequest(tt.method, "/", strings.NewReader(tt.body))
 			w := httptest.NewRecorder()

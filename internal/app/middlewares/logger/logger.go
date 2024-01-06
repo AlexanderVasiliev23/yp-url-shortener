@@ -13,6 +13,10 @@ func Middleware() echo.MiddlewareFunc {
 
 			err := next(c)
 
+			if err != nil {
+				logger.Log.Error(err)
+			}
+
 			duration := time.Since(start)
 
 			logger.Log.Infow(
