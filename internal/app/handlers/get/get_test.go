@@ -66,10 +66,21 @@ func TestGet(t *testing.T) {
 			token:  "",
 			want:   want{code: http.StatusBadRequest},
 		},
+		{
+			name: "deleted url",
+			repo: mockRepo{url: func() *models.ShortLink {
+				m := models.NewShortLink(defaultUserID, uuid.New(), defaultToken, defaultSavedURL)
+				m.Delete()
+				return m
+			}()},
+			method: http.MethodGet,
+			token:  defaultToken,
+			want:   want{code: http.StatusGone},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := Get(tt.repo)
+			handler := NewHandler(tt.repo).Get
 
 			r := httptest.NewRequest(tt.method, "/", nil)
 			w := httptest.NewRecorder()

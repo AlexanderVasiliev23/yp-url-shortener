@@ -7,10 +7,9 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
-
-	"github.com/labstack/echo/v4"
 )
 
 type repository interface {
@@ -26,48 +25,67 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
-func Add(repository repository, tokenGenerator tokenGenerator, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		url, err := io.ReadAll(c.Request().Body)
-		if err != nil || len(url) == 0 {
-			c.Response().WriteHeader(http.StatusBadRequest)
+type Handler struct {
+	repository         repository
+	tokenGenerator     tokenGenerator
+	userContextFetcher userContextFetcher
+	addr               string
+}
+
+func NewHandler(
+	repository repository,
+	tokenGenerator tokenGenerator,
+	userContextFetcher userContextFetcher,
+	addr string,
+) *Handler {
+	return &Handler{
+		repository:         repository,
+		tokenGenerator:     tokenGenerator,
+		userContextFetcher: userContextFetcher,
+		addr:               addr,
+	}
+}
+
+func (h *Handler) Add(c echo.Context) error {
+	url, err := io.ReadAll(c.Request().Body)
+	if err != nil || len(url) == 0 {
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return nil
+	}
+
+	token, err := h.tokenGenerator.Generate()
+	if err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return nil
+	}
+
+	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	model := models.NewShortLink(userID, uuid.New(), token, string(url))
+	if err := h.repository.Add(c.Request().Context(), model); err != nil {
+		if !errors.Is(err, storage.ErrAlreadyExists) {
+			c.Response().WriteHeader(http.StatusInternalServerError)
 			return nil
 		}
 
-		token, err := tokenGenerator.Generate()
+		token, err := h.repository.GetTokenByURL(c.Request().Context(), string(url))
 		if err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return nil
 		}
 
-		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
-		if err != nil {
-			c.Response().WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-
-		model := models.NewShortLink(userID, uuid.New(), token, string(url))
-		if err := repository.Add(c.Request().Context(), model); err != nil {
-			if !errors.Is(err, storage.ErrAlreadyExists) {
-				c.Response().WriteHeader(http.StatusInternalServerError)
-				return nil
-			}
-
-			token, err := repository.GetTokenByURL(c.Request().Context(), string(url))
-			if err != nil {
-				c.Response().WriteHeader(http.StatusInternalServerError)
-				return nil
-			}
-
-			c.Response().WriteHeader(http.StatusConflict)
-			_, _ = fmt.Fprintf(c.Response(), "%s/%s", addr, token)
-
-			return nil
-		}
-
-		c.Response().WriteHeader(http.StatusCreated)
-		_, _ = fmt.Fprintf(c.Response(), "%s/%s", addr, token)
+		c.Response().WriteHeader(http.StatusConflict)
+		_, _ = fmt.Fprintf(c.Response(), "%s/%s", h.addr, token)
 
 		return nil
 	}
+
+	c.Response().WriteHeader(http.StatusCreated)
+	_, _ = fmt.Fprintf(c.Response(), "%s/%s", h.addr, token)
+
+	return nil
 }

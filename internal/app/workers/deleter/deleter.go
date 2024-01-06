@@ -2,14 +2,14 @@ package deleter
 
 import (
 	"context"
-	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"time"
 )
 
 const (
-	maxBatchSize   = 10
-	savingInterval = 1 * time.Second
+	defaultMaxBatchSize        = 10
+	defaultSavingInterval      = 1 * time.Second
+	defaultRepoDeletionTimeout = 30 * time.Second
 )
 
 type Repository interface {
@@ -21,19 +21,45 @@ type DeleteTask struct {
 }
 
 type DeleteWorker struct {
-	repo Repository
+	repo                Repository
+	maxBatchSize        int
+	savingInterval      time.Duration
+	repoDeletionTimeout time.Duration
 }
 
-func NewDeleteWorker(repo Repository) *DeleteWorker {
-	return &DeleteWorker{
-		repo: repo,
+type Options struct {
+	MaxBatchSize        int
+	SavingInterval      time.Duration
+	RepoDeletionTimeout time.Duration
+}
+
+func NewDeleteWorker(repo Repository, opts Options) *DeleteWorker {
+	worker := &DeleteWorker{
+		repo:                repo,
+		maxBatchSize:        defaultMaxBatchSize,
+		savingInterval:      defaultSavingInterval,
+		repoDeletionTimeout: defaultRepoDeletionTimeout,
 	}
+
+	if opts.MaxBatchSize != 0 {
+		worker.maxBatchSize = opts.MaxBatchSize
+	}
+
+	if opts.SavingInterval != 0 {
+		worker.savingInterval = opts.SavingInterval
+	}
+
+	if opts.RepoDeletionTimeout != 0 {
+		worker.repoDeletionTimeout = opts.RepoDeletionTimeout
+	}
+
+	return worker
 }
 
 func (w DeleteWorker) Consume(ch <-chan DeleteTask) {
-	ticker := time.NewTicker(savingInterval)
+	ticker := time.NewTicker(w.savingInterval)
 
-	batch := make([]string, 0, maxBatchSize)
+	batch := make([]string, 0, w.maxBatchSize)
 
 	for {
 		select {
@@ -41,32 +67,32 @@ func (w DeleteWorker) Consume(ch <-chan DeleteTask) {
 			if len(batch) == 0 {
 				continue
 			}
-			if err := w.delete(batch); err != nil {
-				logger.Log.Errorf("exec delete urls by tokens: %v", err)
-			}
+			w.delete(batch)
 			batch = batch[:0]
-		case task := <-ch:
+		case task, ok := <-ch:
+			if !ok {
+				if len(batch) > 0 {
+					w.delete(batch)
+				}
+				return
+			}
 			for _, token := range task.Tokens {
 				batch = append(batch, token)
-				if len(batch) < maxBatchSize {
+				if len(batch) < w.maxBatchSize {
 					continue
 				}
-				if err := w.delete(batch); err != nil {
-					logger.Log.Errorf("exec delete urls by tokens: %v", err)
-				}
+				w.delete(batch)
 				batch = batch[:0]
 			}
 		}
 	}
 }
 
-func (w DeleteWorker) delete(tokens []string) error {
-	ctx, cancelFn := context.WithTimeout(context.Background(), 30*time.Second)
+func (w DeleteWorker) delete(tokens []string) {
+	ctx, cancelFn := context.WithTimeout(context.Background(), w.repoDeletionTimeout)
 	defer cancelFn()
 
 	if err := w.repo.DeleteByTokens(ctx, tokens); err != nil {
-		return fmt.Errorf("exec delete by tokens query: %w", err)
+		logger.Log.Errorf("exec delete urls by tokens: %v", err)
 	}
-
-	return nil
 }

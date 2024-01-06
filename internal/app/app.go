@@ -106,7 +106,9 @@ func (a *App) Run() error {
 }
 
 func (a *App) RunWorkers() error {
-	deleteWorker := deleter.NewDeleteWorker(a.storage)
+	deleteWorker := deleter.NewDeleteWorker(a.storage, deleter.Options{
+		RepoDeletionTimeout: a.conf.DeleteWorkerConfig.RepoTimeout,
+	})
 	deleteWorker.Consume(a.deleteByTokenCh)
 
 	return nil

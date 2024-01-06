@@ -3,10 +3,10 @@ package mock
 import "context"
 
 type UserContextFetcherMock struct {
-	userID int
-	err    error
+	UserID int
+	Err    error
 }
 
 func (f *UserContextFetcherMock) GetUserIDFromContext(ctx context.Context) (int, error) {
-	return f.userID, f.err
+	return f.UserID, f.Err
 }

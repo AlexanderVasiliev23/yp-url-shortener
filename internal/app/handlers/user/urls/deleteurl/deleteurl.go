@@ -16,32 +16,48 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
-func Delete(linksStorage linksStorage, userContextFetcher userContextFetcher, deleteByTokenCh chan<- deleter.DeleteTask) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
-		if err != nil {
-			c.Response().WriteHeader(http.StatusUnauthorized)
-			return err
-		}
+type Handler struct {
+	linksStorage       linksStorage
+	userContextFetcher userContextFetcher
+	deleteByTokenCh    chan<- deleter.DeleteTask
+}
 
-		var reqBody []string
-		if err := json.NewDecoder(c.Request().Body).Decode(&reqBody); err != nil {
-			c.Response().WriteHeader(http.StatusBadRequest)
-			return err
-		}
-
-		tokens, err := linksStorage.FilterOnlyThisUserTokens(c.Request().Context(), userID, reqBody)
-		if err != nil {
-			c.Response().WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-
-		deleteByTokenCh <- deleter.DeleteTask{
-			Tokens: tokens,
-		}
-
-		c.Response().WriteHeader(http.StatusAccepted)
-
-		return nil
+func NewHandler(
+	linksStorage linksStorage,
+	userContextFetcher userContextFetcher,
+	deleteByTokenCh chan<- deleter.DeleteTask,
+) *Handler {
+	return &Handler{
+		linksStorage:       linksStorage,
+		userContextFetcher: userContextFetcher,
+		deleteByTokenCh:    deleteByTokenCh,
 	}
+}
+
+func (h *Handler) Delete(c echo.Context) error {
+	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		c.Response().WriteHeader(http.StatusUnauthorized)
+		return err
+	}
+
+	var reqBody []string
+	if err := json.NewDecoder(c.Request().Body).Decode(&reqBody); err != nil {
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	tokens, err := h.linksStorage.FilterOnlyThisUserTokens(c.Request().Context(), userID, reqBody)
+	if err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	h.deleteByTokenCh <- deleter.DeleteTask{
+		Tokens: tokens,
+	}
+
+	c.Response().WriteHeader(http.StatusAccepted)
+
+	return nil
 }

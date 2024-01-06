@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 const (
@@ -24,6 +25,12 @@ type Config struct {
 	DatabaseDSN           string
 	JWTSecretKey          string
 	Debug                 bool
+
+	DeleteWorkerConfig DeleteWorkerConfig
+}
+
+type DeleteWorkerConfig struct {
+	RepoTimeout time.Duration
 }
 
 func MustConfigure() *Config {
@@ -66,6 +73,10 @@ func MustConfigure() *Config {
 			panic(fmt.Errorf("parsing debug env as bool: %w", err))
 		}
 		conf.Debug = asBool
+	}
+
+	conf.DeleteWorkerConfig = DeleteWorkerConfig{
+		RepoTimeout: 30 * time.Second,
 	}
 
 	return conf
