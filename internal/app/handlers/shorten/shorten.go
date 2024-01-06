@@ -29,65 +29,74 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
-func Shorten(repository repository, tokenGenerator tokenGenerator, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := struct {
-			URL string
-		}{}
+type Shortener struct {
+	repository         repository
+	tokenGenerator     tokenGenerator
+	userContextFetcher userContextFetcher
+	addr               string
+}
 
-		if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
-			c.Response().WriteHeader(http.StatusBadRequest)
+func NewShortener(
+	repository repository,
+	tokenGenerator tokenGenerator,
+	userContextFetcher userContextFetcher,
+	addr string,
+) *Shortener {
+	return &Shortener{
+		repository:         repository,
+		tokenGenerator:     tokenGenerator,
+		userContextFetcher: userContextFetcher,
+		addr:               addr,
+	}
+}
+
+func (h *Shortener) Handle(c echo.Context) error {
+	req := struct {
+		URL string
+	}{}
+
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	if req.URL == "" {
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return ErrURLIsEmpty
+	}
+
+	token, err := h.tokenGenerator.Generate()
+	if err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	type resp struct {
+		Result string `json:"result"`
+	}
+
+	c.Response().Header().Set("Content-Type", "application/json")
+
+	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	model := models.NewShortLink(userID, uuid.New(), token, req.URL)
+	if err := h.repository.Add(c.Request().Context(), model); err != nil {
+		if !errors.Is(err, storage.ErrAlreadyExists) {
+			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
 
-		if req.URL == "" {
-			c.Response().WriteHeader(http.StatusBadRequest)
-			return ErrURLIsEmpty
-		}
-
-		token, err := tokenGenerator.Generate()
+		token, err := h.repository.GetTokenByURL(c.Request().Context(), req.URL)
 		if err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
 
-		type resp struct {
-			Result string `json:"result"`
-		}
-
-		c.Response().Header().Set("Content-Type", "application/json")
-
-		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
-		if err != nil {
-			c.Response().WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-		model := models.NewShortLink(userID, uuid.New(), token, req.URL)
-		if err := repository.Add(c.Request().Context(), model); err != nil {
-			if !errors.Is(err, storage.ErrAlreadyExists) {
-				c.Response().WriteHeader(http.StatusInternalServerError)
-				return err
-			}
-
-			token, err := repository.GetTokenByURL(c.Request().Context(), req.URL)
-			if err != nil {
-				c.Response().WriteHeader(http.StatusInternalServerError)
-				return err
-			}
-
-			c.Response().WriteHeader(http.StatusConflict)
-			response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
-			if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
-				c.Response().WriteHeader(http.StatusInternalServerError)
-				return err
-			}
-
-			return nil
-		}
-
-		response := resp{Result: fmt.Sprintf("%s/%s", addr, token)}
-		c.Response().WriteHeader(http.StatusCreated)
-		c.Response().Header().Set("Content-Type", "application/json")
+		c.Response().WriteHeader(http.StatusConflict)
+		response := resp{Result: fmt.Sprintf("%s/%s", h.addr, token)}
 		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
@@ -95,4 +104,14 @@ func Shorten(repository repository, tokenGenerator tokenGenerator, userContextFe
 
 		return nil
 	}
+
+	response := resp{Result: fmt.Sprintf("%s/%s", h.addr, token)}
+	c.Response().WriteHeader(http.StatusCreated)
+	c.Response().Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
 }

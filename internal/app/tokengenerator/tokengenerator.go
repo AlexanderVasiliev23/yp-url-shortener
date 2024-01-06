@@ -4,30 +4,33 @@ import (
 	"errors"
 	"math"
 	"math/rand"
+	"sync"
 )
 
 var symbols = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 var ErrUniqueTokensRunOut = errors.New("unique tokens run out")
 
-type (
-	token  string
-	tokens map[token]struct{}
+type token string
 
-	TokenGenerator struct {
-		generatedTokens tokens
-		tokenLen        int
-		maxTokensCount  int
-	}
-)
+type TokenGenerator struct {
+	generatedTokens map[token]struct{}
+	tokenLen        int
+	maxTokensCount  int
+	mu              sync.RWMutex
+}
 
-func (m tokens) has(t token) bool {
-	_, ok := m[t]
+func (g *TokenGenerator) has(t token) bool {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	_, ok := g.generatedTokens[t]
 
 	return ok
 }
 
-func (m tokens) add(t token) {
-	m[t] = struct{}{}
+func (g *TokenGenerator) add(t token) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.generatedTokens[t] = struct{}{}
 }
 
 func New(tokenLen int) *TokenGenerator {
@@ -46,11 +49,11 @@ func (g *TokenGenerator) Generate() (string, error) {
 	for {
 		t := g.generateRandom()
 
-		if g.generatedTokens.has(t) {
+		if g.has(t) {
 			continue
 		}
 
-		g.generatedTokens.add(t)
+		g.add(t)
 
 		return string(t), nil
 	}

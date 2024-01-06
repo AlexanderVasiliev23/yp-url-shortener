@@ -26,69 +26,91 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
-func Shorten(saver batchSaver, tokenGenerator tokenGenerator, uuidGenerator uuidGenerator, userContextFetcher userContextFetcher, addr string) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		type reqItem struct {
-			CorrelationID string `json:"correlation_id"`
-			OriginalURL   string `json:"original_url"`
-		}
+type Shortener struct {
+	saver              batchSaver
+	tokenGenerator     tokenGenerator
+	uuidGenerator      uuidGenerator
+	userContextFetcher userContextFetcher
+	addr               string
+}
 
-		type req []reqItem
+func NewShortener(
+	saver batchSaver,
+	tokenGenerator tokenGenerator,
+	uuidGenerator uuidGenerator,
+	userContextFetcher userContextFetcher,
+	addr string,
+) *Shortener {
+	return &Shortener{
+		saver:              saver,
+		tokenGenerator:     tokenGenerator,
+		uuidGenerator:      uuidGenerator,
+		userContextFetcher: userContextFetcher,
+		addr:               addr,
+	}
+}
 
-		var requestItems req
+func (h *Shortener) Handle(c echo.Context) error {
+	type reqItem struct {
+		CorrelationID string `json:"correlation_id"`
+		OriginalURL   string `json:"original_url"`
+	}
 
-		if err := json.NewDecoder(c.Request().Body).Decode(&requestItems); err != nil {
-			c.Response().WriteHeader(http.StatusBadRequest)
-			return err
-		}
+	type req []reqItem
 
-		type respItem struct {
-			CorrelationID string `json:"correlation_id"`
-			ShortURL      string `json:"short_url"`
-		}
+	var requestItems req
 
-		type responseItems []respItem
+	if err := json.NewDecoder(c.Request().Body).Decode(&requestItems); err != nil {
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return err
+	}
 
-		var response responseItems
+	type respItem struct {
+		CorrelationID string `json:"correlation_id"`
+		ShortURL      string `json:"short_url"`
+	}
 
-		toSave := make([]*models.ShortLink, 0, len(requestItems))
+	type responseItems []respItem
 
-		userID, err := userContextFetcher.GetUserIDFromContext(c.Request().Context())
+	var response responseItems
+
+	toSave := make([]*models.ShortLink, 0, len(requestItems))
+
+	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	for _, requestItem := range requestItems {
+		token, err := h.tokenGenerator.Generate()
 		if err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
 
-		for _, requestItem := range requestItems {
-			token, err := tokenGenerator.Generate()
-			if err != nil {
-				c.Response().WriteHeader(http.StatusInternalServerError)
-				return err
-			}
+		shortLink := models.NewShortLink(userID, h.uuidGenerator.Generate(), token, requestItem.OriginalURL)
+		toSave = append(toSave, shortLink)
 
-			shortLink := models.NewShortLink(userID, uuidGenerator.Generate(), token, requestItem.OriginalURL)
-			toSave = append(toSave, shortLink)
-
-			respItem := respItem{
-				CorrelationID: requestItem.CorrelationID,
-				ShortURL:      fmt.Sprintf("%s/%s", addr, token),
-			}
-
-			response = append(response, respItem)
+		respItem := respItem{
+			CorrelationID: requestItem.CorrelationID,
+			ShortURL:      fmt.Sprintf("%s/%s", h.addr, token),
 		}
 
-		if err := saver.SaveBatch(c.Request().Context(), toSave); err != nil {
-			c.Response().WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-
-		c.Response().Header().Set("Content-Type", "application/json")
-		c.Response().WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
-			c.Response().WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-
-		return nil
+		response = append(response, respItem)
 	}
+
+	if err := h.saver.SaveBatch(c.Request().Context(), toSave); err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	c.Response().Header().Set("Content-Type", "application/json")
+	c.Response().WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
 }

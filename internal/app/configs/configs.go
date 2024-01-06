@@ -2,7 +2,10 @@ package configs
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strconv"
+	"time"
 )
 
 const (
@@ -10,6 +13,7 @@ const (
 	defaultStorageFilePath       = "/tmp/short-url-db.json"
 	defaultFileStorageBufferSize = 10
 	defaultJWTSecretKey          = "V}^7/Y-t;F2*E,G>Tw<$Dd"
+	defaultDebug                 = false
 )
 
 type Config struct {
@@ -20,9 +24,16 @@ type Config struct {
 	FileStorageBufferSize int
 	DatabaseDSN           string
 	JWTSecretKey          string
+	Debug                 bool
+
+	DeleteWorkerConfig DeleteWorkerConfig
 }
 
-func Configure() *Config {
+type DeleteWorkerConfig struct {
+	RepoTimeout time.Duration
+}
+
+func MustConfigure() *Config {
 	conf := &Config{}
 
 	flag.StringVar(&conf.Addr, "a", ":8080", "server address")
@@ -53,6 +64,19 @@ func Configure() *Config {
 	conf.JWTSecretKey = defaultJWTSecretKey
 	if JWTSecretKey, set := os.LookupEnv("JWT_SECRET_KEY"); set {
 		conf.JWTSecretKey = JWTSecretKey
+	}
+
+	conf.Debug = defaultDebug
+	if debug, set := os.LookupEnv("DEBUG"); set {
+		asBool, err := strconv.ParseBool(debug)
+		if err != nil {
+			panic(fmt.Errorf("parsing debug env as bool: %w", err))
+		}
+		conf.Debug = asBool
+	}
+
+	conf.DeleteWorkerConfig = DeleteWorkerConfig{
+		RepoTimeout: 30 * time.Second,
 	}
 
 	return conf

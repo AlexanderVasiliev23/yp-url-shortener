@@ -1,4 +1,4 @@
-package urls
+package list
 
 import (
 	"context"
@@ -42,7 +42,6 @@ func (s storageMock) FindByUserID(ctx context.Context, userID int) ([]*models.Sh
 }
 
 func TestUrls(t *testing.T) {
-
 	type want struct {
 		code int
 		body string
@@ -57,6 +56,9 @@ func TestUrls(t *testing.T) {
 	}{
 		{
 			name: "empty list",
+			userContextFetcherMock: &userContextFetcherMock{
+				userID: defaultUserID,
+			},
 			storage: storageMock{
 				result: make([]*models.ShortLink, 0),
 			},
@@ -66,6 +68,9 @@ func TestUrls(t *testing.T) {
 		},
 		{
 			name: "success list",
+			userContextFetcherMock: &userContextFetcherMock{
+				userID: defaultUserID,
+			},
 			storage: storageMock{
 				result: []*models.ShortLink{
 					{
@@ -81,11 +86,24 @@ func TestUrls(t *testing.T) {
 		},
 		{
 			name: "storage error",
+			userContextFetcherMock: &userContextFetcherMock{
+				userID: defaultUserID,
+			},
 			storage: storageMock{
 				err: ErrDefault,
 			},
 			want: want{
 				code: http.StatusInternalServerError,
+				err:  ErrDefault,
+			},
+		},
+		{
+			name: "unauthorized",
+			userContextFetcherMock: &userContextFetcherMock{
+				err: ErrDefault,
+			},
+			want: want{
+				code: http.StatusUnauthorized,
 				err:  ErrDefault,
 			},
 		},
@@ -96,7 +114,7 @@ func TestUrls(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			h := Urls(tc.storage, userContextFetcherMock{userID: defaultUserID}, defaultAddr)
+			h := NewHandler(tc.storage, tc.userContextFetcherMock, defaultAddr).List
 
 			e := echo.New()
 			c := e.NewContext(request, recorder)
