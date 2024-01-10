@@ -22,18 +22,18 @@ const (
 )
 
 type mockStorage struct {
-	data map[string]string
+	data map[string]*models.ShortLink
 }
 
 func (m mockStorage) Add(ctx context.Context, shortLink *models.ShortLink) error {
-	m.data[shortLink.Token] = shortLink.Original
+	m.data[shortLink.Token] = shortLink
 	return nil
 }
 
-func (m mockStorage) Get(ctx context.Context, token string) (string, error) {
+func (m mockStorage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
 	url, ok := m.data[token]
 	if !ok {
-		return "", local.ErrURLNotFound
+		return nil, local.ErrURLNotFound
 	}
 
 	return url, nil
@@ -51,6 +51,14 @@ func (m mockStorage) FindByUserID(ctx context.Context, userID int) ([]*models.Sh
 	return nil, nil
 }
 
+func (m mockStorage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	return nil
+}
+
+func (m mockStorage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	return nil, nil
+}
+
 func TestStorage_RecoveringFromFileSuccess(t *testing.T) {
 	defer os.Remove(testStorageFilePath)
 
@@ -60,12 +68,12 @@ func TestStorage_RecoveringFromFileSuccess(t *testing.T) {
 	err := os.WriteFile(testStorageFilePath, []byte(fmt.Sprintf(`{"id":"%s","token":"%s","original":"%s","user_id":%d}`, uuid.NewString(), token, URL, defaultUserID)+"\n"), os.ModePerm)
 	require.NoError(t, err)
 
-	s, err := New(context.Background(), mockStorage{make(map[string]string)}, google.UUIDGenerator{}, testStorageFilePath, defaultBufferSize)
+	s, err := New(context.Background(), mockStorage{make(map[string]*models.ShortLink)}, google.UUIDGenerator{}, testStorageFilePath, defaultBufferSize)
 	require.NoError(t, err)
 
 	actualURL, err := s.Get(context.Background(), token)
 	require.NoError(t, err)
-	assert.Equal(t, URL, actualURL)
+	assert.Equal(t, URL, actualURL.Original)
 }
 
 func TestStorage_RecoveringFromFileFailed(t *testing.T) {
@@ -74,14 +82,14 @@ func TestStorage_RecoveringFromFileFailed(t *testing.T) {
 	err := os.WriteFile(testStorageFilePath, []byte(`{"wrong":"data"}`+"\n"), os.ModePerm)
 	require.NoError(t, err)
 
-	_, err = New(context.Background(), mockStorage{make(map[string]string)}, google.UUIDGenerator{}, testStorageFilePath, defaultBufferSize)
+	_, err = New(context.Background(), mockStorage{make(map[string]*models.ShortLink)}, google.UUIDGenerator{}, testStorageFilePath, defaultBufferSize)
 	require.Error(t, err)
 }
 
 func TestStorage_BufferSizeEqualsZero(t *testing.T) {
 	defer os.Remove(testStorageFilePath)
 
-	s, err := New(context.Background(), mockStorage{make(map[string]string)}, google.UUIDGenerator{}, testStorageFilePath, 0)
+	s, err := New(context.Background(), mockStorage{make(map[string]*models.ShortLink)}, google.UUIDGenerator{}, testStorageFilePath, 0)
 	require.NoError(t, err)
 
 	require.NoError(t, s.Add(context.Background(), models.NewShortLink(defaultUserID, uuid.New(), "token1", "url1")))
@@ -95,7 +103,7 @@ func TestStorage_BufferSizeEqualsZero(t *testing.T) {
 func TestStorage_BufferSizeEqualsOne(t *testing.T) {
 	defer os.Remove(testStorageFilePath)
 
-	s, err := New(context.Background(), mockStorage{make(map[string]string)}, google.UUIDGenerator{}, testStorageFilePath, 1)
+	s, err := New(context.Background(), mockStorage{make(map[string]*models.ShortLink)}, google.UUIDGenerator{}, testStorageFilePath, 1)
 	require.NoError(t, err)
 
 	require.NoError(t, s.Add(context.Background(), models.NewShortLink(defaultUserID, uuid.New(), "token1", "url1")))

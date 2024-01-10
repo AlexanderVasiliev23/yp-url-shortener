@@ -37,7 +37,7 @@ func New(ctx context.Context, wrappedStorage storage.Storage, uuidGenerator uuid
 	}
 
 	if err := s.recoverDataFromFile(ctx); err != nil {
-		return nil, fmt.Errorf("recovering storage data from file %w", err)
+		return nil, fmt.Errorf("recovering storage data from file: %w", err)
 	}
 
 	return s, nil
@@ -59,7 +59,7 @@ func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return nil
 }
 
-func (s *Storage) Get(ctx context.Context, token string) (string, error) {
+func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
 	return s.wrappedStorage.Get(ctx, token)
 }
 
@@ -119,4 +119,12 @@ func (s *Storage) recoverDataFromFile(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	return s.wrappedStorage.DeleteByTokens(ctx, tokens)
+}
+
+func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	return s.wrappedStorage.FilterOnlyThisUserTokens(ctx, userID, tokens)
 }
