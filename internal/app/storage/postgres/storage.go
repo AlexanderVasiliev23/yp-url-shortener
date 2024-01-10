@@ -149,7 +149,7 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 }
 
 func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
-	q := `select id, token, original, user_id from short_links where user_id = $1`
+	q := `select id, token, original, user_id from short_links where user_id = $1 and deleted_at is null`
 
 	rows, err := s.dbConn.Query(ctx, q, userID)
 	if err != nil {

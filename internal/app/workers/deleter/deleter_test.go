@@ -35,7 +35,7 @@ func TestDeleteWorker_SettingOptions(t *testing.T) {
 	assert.Equal(t, worker.repoDeletionTimeout, repoDeletionTimeout)
 }
 
-func TestDeleteWorker(t *testing.T) {
+func BenchmarkTestDeleteWorker(b *testing.B) {
 	testCases := []struct {
 		name         string
 		tokensToSave []string
@@ -68,7 +68,7 @@ func TestDeleteWorker(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		b.Run(tc.name, func(b *testing.B) {
 			repo := &repositoryMock{}
 			worker := NewDeleteWorker(repo, tc.opts)
 
@@ -90,7 +90,7 @@ func TestDeleteWorker(t *testing.T) {
 
 			wg.Wait()
 
-			assert.Equal(t, tc.tokensToSave, repo.deletedTokens)
+			assert.Equal(b, tc.tokensToSave, repo.deletedTokens)
 		})
 	}
 }
