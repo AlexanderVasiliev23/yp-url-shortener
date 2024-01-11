@@ -9,15 +9,16 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var _ storage.Storage = (*Storage)(nil)
 
 type Storage struct {
-	dbConn *pgx.Conn
+	dbConn *pgxpool.Pool
 }
 
-func New(ctx context.Context, dbConn *pgx.Conn) (*Storage, error) {
+func New(ctx context.Context, dbConn *pgxpool.Pool) (*Storage, error) {
 	s := &Storage{
 		dbConn: dbConn,
 	}
@@ -35,7 +36,9 @@ func (s *Storage) createSchema(ctx context.Context) error {
 		(
 			id       uuid primary key,
 			token    varchar(255) not null,
-			original varchar(255) not null
+			original varchar(255) not null,
+			user_id  bigint not null,
+			deleted_at timestamp null
 		)
 	`
 
@@ -74,9 +77,7 @@ func (s *Storage) createSchema(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) Add(ctx context.Context, token, url string) error {
-	shortLink := models.NewShortLink(token, url)
-
+func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	if err := s.save(ctx, shortLink); err != nil {
 		return fmt.Errorf("save short link: %w", err)
 	}
@@ -84,17 +85,23 @@ func (s *Storage) Add(ctx context.Context, token, url string) error {
 	return nil
 }
 
-func (s *Storage) Get(ctx context.Context, token string) (string, error) {
-	q := `select original from short_links where token = $1;`
+func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
+	q := `select id, token, original, user_id, deleted_at from short_links where token = $1;`
 
-	var link string
+	link := new(models.ShortLink)
 
-	if err := s.dbConn.QueryRow(ctx, q, token).Scan(&link); err != nil {
+	if err := s.dbConn.QueryRow(ctx, q, token).Scan(
+		&link.ID,
+		&link.Token,
+		&link.Original,
+		&link.UserID,
+		&link.DeletedAt,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", storage.ErrNotFound
+			return nil, storage.ErrNotFound
 		}
 
-		return "", fmt.Errorf("query link by token: %w", err)
+		return nil, fmt.Errorf("query link by token: %w", err)
 	}
 
 	return link, nil
@@ -120,11 +127,11 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	}
 
 	var entries [][]any
-	columns := []string{"id", "token", "original"}
+	columns := []string{"id", "token", "original", "user_id"}
 	tableName := "short_links"
 
 	for _, shortLink := range shortLinks {
-		entries = append(entries, []any{shortLink.ID, shortLink.Token, shortLink.Original})
+		entries = append(entries, []any{shortLink.ID, shortLink.Token, shortLink.Original, shortLink.UserID})
 	}
 
 	_, err := s.dbConn.CopyFrom(
@@ -141,10 +148,78 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	return nil
 }
 
-func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
-	q := `insert into short_links (id, token, original) values ($1,$2,$3)`
+func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
+	q := `select id, token, original, user_id from short_links where user_id = $1 and deleted_at is null`
 
-	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original); err != nil {
+	rows, err := s.dbConn.Query(ctx, q, userID)
+	if err != nil {
+		return nil, fmt.Errorf("select short links by user: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*models.ShortLink
+	for rows.Next() {
+		var model models.ShortLink
+		if err := rows.Scan(
+			&model.ID,
+			&model.Token,
+			&model.Original,
+			&model.UserID,
+		); err != nil {
+			return nil, fmt.Errorf("scan row to struct: %w", err)
+		}
+
+		result = append(result, &model)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("find by user id: rows err: %w", err)
+	}
+
+	return result, nil
+}
+
+func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	q := `update short_links set deleted_at = now() where token = ANY ($1)`
+
+	if _, err := s.dbConn.Exec(ctx, q, tokens); err != nil {
+		return fmt.Errorf("exec delete tokens query: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	q := `
+		select token
+		from short_links
+		where user_id = $1 and token = any($2);
+	`
+
+	rows, err := s.dbConn.Query(ctx, q, userID, tokens)
+	if err != nil {
+		return nil, fmt.Errorf("select tokens by user and tokens: %w", err)
+	}
+
+	res := make([]string, 0, len(tokens))
+	for rows.Next() {
+		var token string
+		if err := rows.Scan(&token); err != nil {
+			return nil, fmt.Errorf("scan token: %w", err)
+		}
+		res = append(res, token)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("filter only this user tokens: rows err: %w", err)
+	}
+
+	return res, nil
+}
+
+func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
+	q := `insert into short_links (id, token, original, user_id) values ($1,$2,$3,$4)`
+
+	if _, err := s.dbConn.Exec(ctx, q, shortLink.ID, shortLink.Token, shortLink.Original, shortLink.UserID); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return storage.ErrAlreadyExists

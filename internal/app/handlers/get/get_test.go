@@ -2,7 +2,9 @@ package get
 
 import (
 	"context"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
+	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,14 +17,15 @@ import (
 const (
 	defaultToken    = "default_test_token"
 	defaultSavedURL = "default_saved_url"
+	defaultUserID   = 123
 )
 
 type mockRepo struct {
 	err error
-	url string
+	url *models.ShortLink
 }
 
-func (m mockRepo) Get(ctx context.Context, s string) (url string, err error) {
+func (m mockRepo) Get(ctx context.Context, s string) (*models.ShortLink, error) {
 	return m.url, m.err
 }
 
@@ -41,7 +44,7 @@ func TestGet(t *testing.T) {
 	}{
 		{
 			name:   "success",
-			repo:   mockRepo{url: defaultSavedURL},
+			repo:   mockRepo{url: models.NewShortLink(defaultUserID, uuid.New(), defaultToken, defaultSavedURL)},
 			method: http.MethodGet,
 			token:  defaultToken,
 			want: want{
@@ -63,10 +66,21 @@ func TestGet(t *testing.T) {
 			token:  "",
 			want:   want{code: http.StatusBadRequest},
 		},
+		{
+			name: "deleted url",
+			repo: mockRepo{url: func() *models.ShortLink {
+				m := models.NewShortLink(defaultUserID, uuid.New(), defaultToken, defaultSavedURL)
+				m.Delete()
+				return m
+			}()},
+			method: http.MethodGet,
+			token:  defaultToken,
+			want:   want{code: http.StatusGone},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := Get(tt.repo)
+			handler := NewHandler(tt.repo).Get
 
 			r := httptest.NewRequest(tt.method, "/", nil)
 			w := httptest.NewRecorder()

@@ -6,7 +6,10 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/ping"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten/batch"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/deleteurl"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/list"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/jwt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -19,13 +22,26 @@ func (a *App) configureRouter() *echo.Echo {
 		logger.Middleware(),
 		gzip.Middleware(),
 		middleware.Recover(),
+		jwt.Middleware(a.conf.JWTSecretKey),
 	)
 
-	e.POST("/", add.Add(a.storage, a.tokenGenerator, a.conf.BaseAddress))
-	e.GET("/:token", get.Get(a.storage))
-	e.POST("/api/shorten", shorten.Shorten(a.storage, a.tokenGenerator, a.conf.BaseAddress))
-	e.POST("/api/shorten/batch", batch.Shorten(a.storage, a.tokenGenerator, a.conf.BaseAddress))
-	e.GET("/ping", ping.Ping(a.dbConn))
+	addHandler := add.NewHandler(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
+	getHandler := get.NewHandler(a.storage)
+	shortener := shorten.NewShortener(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
+	batchShortener := batch.NewShortener(a.storage, a.tokenGenerator, a.uuidGenerator, a.userContextFetcher, a.conf.BaseAddress)
+	pingHandler := ping.NewHandler(a.dbConn)
+	listHandler := list.NewHandler(a.storage, a.userContextFetcher, a.conf.BaseAddress)
+	deleteHandler := deleteurl.NewHandler(a.storage, a.userContextFetcher, a.deleteByTokenCh)
+
+	e.GET("/:token", getHandler.Get)
+	e.GET("/ping", pingHandler.Ping)
+	e.POST("/", addHandler.Add)
+	e.POST("/api/shorten", shortener.Handle)
+	e.POST("/api/shorten/batch", batchShortener.Handle)
+
+	g := e.Group("/api/user", jwt.Auth(a.conf.JWTSecretKey))
+	g.GET("/urls", listHandler.List)
+	g.DELETE("/urls", deleteHandler.Delete)
 
 	return e
 }
