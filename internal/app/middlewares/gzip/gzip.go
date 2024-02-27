@@ -12,10 +12,12 @@ type gzipWriter struct {
 	writer *gzip.Writer
 }
 
+// Write missing godoc.
 func (gw *gzipWriter) Write(data []byte) (int, error) {
 	return gw.writer.Write(data)
 }
 
+// Middleware missing godoc.
 func Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

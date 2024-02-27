@@ -9,6 +9,8 @@ import (
 )
 
 var symbols = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+// ErrUniqueTokensRunOut missing godoc.
 var ErrUniqueTokensRunOut = errors.New("unique tokens run out")
 
 type token string

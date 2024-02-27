@@ -19,12 +19,14 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Handler missing godoc.
 type Handler struct {
 	storage            linksStorage
 	userContextFetcher userContextFetcher
 	addr               string
 }
 
+// NewHandler missing godoc.
 func NewHandler(
 	storage linksStorage,
 	userContextFetcher userContextFetcher,
@@ -37,6 +39,7 @@ func NewHandler(
 	}
 }
 
+// List missing godoc.
 func (h *Handler) List(c echo.Context) error {
 	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
 	if err != nil {

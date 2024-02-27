@@ -8,6 +8,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 )
 
+// Middleware missing godoc.
 func Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

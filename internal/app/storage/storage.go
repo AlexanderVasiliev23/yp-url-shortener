@@ -8,10 +8,13 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not found")
+	// ErrNotFound missing godoc.
+	ErrNotFound = errors.New("not found")
+	// ErrAlreadyExists missing godoc.
 	ErrAlreadyExists = errors.New("already exists")
 )
 
+// Storage missing godoc.
 type Storage interface {
 	Add(ctx context.Context, shortLink *models.ShortLink) error
 	Get(ctx context.Context, token string) (link *models.ShortLink, err error)

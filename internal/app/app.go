@@ -25,6 +25,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 )
 
+// App missing godoc.
 type App struct {
 	conf               *configs.Config
 	storage            storage.Storage
@@ -37,6 +38,7 @@ type App struct {
 	deleteByTokenCh chan deleter.DeleteTask
 }
 
+// New missing godoc.
 func New(ctx context.Context, conf *configs.Config) *App {
 	a := new(App)
 
@@ -102,12 +104,14 @@ func (a *App) buildStorage(ctx context.Context) (storage.Storage, error) {
 	return local.New(a.uuidGenerator), nil
 }
 
+// Run missing godoc.
 func (a *App) Run() error {
 	logger.Log.Infof("Server is running on %s", a.conf.Addr)
 
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 }
 
+// RunWorkers missing godoc.
 func (a *App) RunWorkers() error {
 	deleteWorker := deleter.NewDeleteWorker(a.storage, deleter.Options{
 		RepoDeletionTimeout: a.conf.DeleteWorkerConfig.RepoTimeout,
@@ -117,6 +121,7 @@ func (a *App) RunWorkers() error {
 	return nil
 }
 
+// Shutdown missing godoc.
 func (a *App) Shutdown() error {
 	s, ok := a.storage.(*dumper.Storage)
 	if ok {

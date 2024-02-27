@@ -28,6 +28,7 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Shortener missing godoc.
 type Shortener struct {
 	saver              batchSaver
 	tokenGenerator     tokenGenerator
@@ -36,6 +37,7 @@ type Shortener struct {
 	addr               string
 }
 
+// NewShortener missing godoc.
 func NewShortener(
 	saver batchSaver,
 	tokenGenerator tokenGenerator,
@@ -52,6 +54,7 @@ func NewShortener(
 	}
 }
 
+// Handle missing godoc.
 func (h *Shortener) Handle(c echo.Context) error {
 	type reqItem struct {
 		CorrelationID string `json:"correlation_id"`

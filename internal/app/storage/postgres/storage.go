@@ -16,10 +16,12 @@ import (
 
 var _ storage.Storage = (*Storage)(nil)
 
+// Storage missing godoc.
 type Storage struct {
 	dbConn *pgxpool.Pool
 }
 
+// New missing godoc.
 func New(ctx context.Context, dbConn *pgxpool.Pool) (*Storage, error) {
 	s := &Storage{
 		dbConn: dbConn,
@@ -79,6 +81,7 @@ func (s *Storage) createSchema(ctx context.Context) error {
 	return nil
 }
 
+// Add missing godoc.
 func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	if err := s.save(ctx, shortLink); err != nil {
 		return fmt.Errorf("save short link: %w", err)
@@ -87,6 +90,7 @@ func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return nil
 }
 
+// Get missing godoc.
 func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
 	q := `select id, token, original, user_id, deleted_at from short_links where token = $1;`
 
@@ -109,6 +113,7 @@ func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, err
 	return link, nil
 }
 
+// GetTokenByURL missing godoc.
 func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
 	var token string
 
@@ -123,6 +128,7 @@ func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error)
 	return token, nil
 }
 
+// SaveBatch missing godoc.
 func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
 	if len(shortLinks) == 0 {
 		return nil
@@ -150,6 +156,7 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	return nil
 }
 
+// FindByUserID missing godoc.
 func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
 	q := `select id, token, original, user_id from short_links where user_id = $1 and deleted_at is null`
 
@@ -180,6 +187,7 @@ func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.Short
 	return result, nil
 }
 
+// DeleteByTokens missing godoc.
 func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
 	q := `update short_links set deleted_at = now() where token = ANY ($1)`
 
@@ -190,6 +198,7 @@ func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
 	return nil
 }
 
+// FilterOnlyThisUserTokens missing godoc.
 func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
 	q := `
 		select token

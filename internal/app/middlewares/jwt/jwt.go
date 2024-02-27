@@ -23,11 +23,13 @@ var (
 	errUserIDNotSet   = errors.New("user id is not set")
 )
 
+// Claims missing godoc.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int
 }
 
+// Auth missing godoc.
 func Auth(JWTSecretKey string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -41,6 +43,7 @@ func Auth(JWTSecretKey string) echo.MiddlewareFunc {
 	}
 }
 
+// Middleware missing godoc.
 func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

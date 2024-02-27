@@ -14,6 +14,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 )
 
+// ErrURLIsEmpty missing godoc.
 var (
 	ErrURLIsEmpty = errors.New("url is empty")
 )
@@ -31,6 +32,7 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Shortener missing godoc.
 type Shortener struct {
 	repository         repository
 	tokenGenerator     tokenGenerator
@@ -38,6 +40,7 @@ type Shortener struct {
 	addr               string
 }
 
+// NewShortener missing godoc.
 func NewShortener(
 	repository repository,
 	tokenGenerator tokenGenerator,
@@ -52,6 +55,7 @@ func NewShortener(
 	}
 }
 
+// Handle missing godoc.
 func (h *Shortener) Handle(c echo.Context) error {
 	req := struct {
 		URL string
