@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/AlexanderVasiliev23/yp-url-shortener/pkg/tokengenerator"
+
 	zap "github.com/jackc/pgx-zap"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/tracelog"
@@ -17,7 +19,6 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/dumper"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/postgres"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/tokengenerator"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
