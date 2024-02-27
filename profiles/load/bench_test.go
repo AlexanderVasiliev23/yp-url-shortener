@@ -19,9 +19,11 @@ func BenchmarkLoad(b *testing.B) {
 func generateLoad() error {
 	client := http.Client{}
 	for _, req := range buildRequests() {
-		if _, err := client.Do(req); err != nil {
+		resp, err := client.Do(req)
+		if err != nil {
 			return err
 		}
+		resp.Body.Close()
 	}
 
 	return nil
