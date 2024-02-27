@@ -1,6 +1,9 @@
 package app
 
 import (
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/add"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/get"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/ping"
@@ -11,8 +14,6 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/jwt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 func (a *App) configureRouter() *echo.Echo {

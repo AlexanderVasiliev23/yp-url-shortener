@@ -2,8 +2,9 @@ package deleter
 
 import (
 	"context"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"time"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 )
 
 const (

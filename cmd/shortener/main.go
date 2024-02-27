@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
-	"golang.org/x/sync/errgroup"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 )
 
 func main() {

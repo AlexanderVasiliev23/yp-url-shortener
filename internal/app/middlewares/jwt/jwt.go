@@ -3,11 +3,13 @@ package jwt
 import (
 	"errors"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth"
 )
 
 const (

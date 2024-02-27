@@ -3,9 +3,11 @@ package deleteurl
 import (
 	"context"
 	"encoding/json"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
-	"github.com/labstack/echo/v4"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 )
 
 type linksStorage interface {

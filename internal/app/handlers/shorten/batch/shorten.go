@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"net/http"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 )
 
 type batchSaver interface {

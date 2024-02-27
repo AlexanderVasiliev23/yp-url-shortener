@@ -1,9 +1,10 @@
 package ping
 
 import (
+	"net/http"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 type Handler struct {
