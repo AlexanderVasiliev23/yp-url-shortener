@@ -9,7 +9,7 @@ import (
 const url = "http://localhost:8080"
 
 func BenchmarkLoad(b *testing.B) {
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		if err := generateLoad(); err != nil {
 			b.Errorf("generateLoad failed: %v", err)
 		}

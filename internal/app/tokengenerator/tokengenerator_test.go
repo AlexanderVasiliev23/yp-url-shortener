@@ -39,7 +39,7 @@ func Benchmark_Generate(b *testing.B) {
 
 	tokGen := New(tokenLen)
 
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		_, _ = tokGen.Generate()
 	}
 }
