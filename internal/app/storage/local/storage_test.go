@@ -2,11 +2,13 @@ package local
 
 import (
 	"context"
+	"testing"
+
+	"github.com/google/uuid"
+
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/mock"
-	"github.com/google/uuid"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

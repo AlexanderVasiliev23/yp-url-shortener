@@ -23,3 +23,6 @@ golangci-lint-run:
 
 mem-optimization-diff:
 	go tool pprof -top -diff_base=profiles/base.pprof profiles/result.pprof
+
+format-code:
+	goimports -local "github.com/AlexanderVasiliev23/yp-url-shortener" -w ./..

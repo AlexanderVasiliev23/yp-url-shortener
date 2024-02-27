@@ -5,14 +5,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
+	"os"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 )
 
 const (

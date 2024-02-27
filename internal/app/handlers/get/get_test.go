@@ -2,12 +2,14 @@ package get
 
 import (
 	"context"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
-	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/google/uuid"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage/local"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"

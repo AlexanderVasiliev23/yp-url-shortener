@@ -3,6 +3,14 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+
+	zap "github.com/jackc/pgx-zap"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/tracelog"
+	"github.com/labstack/echo/v4"
+
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
@@ -14,12 +22,6 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
-	zap "github.com/jackc/pgx-zap"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/tracelog"
-	"github.com/labstack/echo/v4"
-	"net/http"
-	"os"
 )
 
 type App struct {

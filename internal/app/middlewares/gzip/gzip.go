@@ -2,8 +2,9 @@ package gzip
 
 import (
 	"compress/gzip"
-	"github.com/labstack/echo/v4"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type gzipWriter struct {

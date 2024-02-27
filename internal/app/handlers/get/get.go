@@ -2,8 +2,9 @@ package get
 
 import (
 	"context"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"net/http"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 
 	"github.com/labstack/echo/v4"
 )
