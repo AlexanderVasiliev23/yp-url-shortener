@@ -1,17 +1,20 @@
-package load
+package main
 
 import (
+	"log"
 	"net/http"
 	"strings"
-	"testing"
 )
 
-const url = "http://localhost:8080"
+const (
+	url   = "http://localhost:8080"
+	times = 300
+)
 
-func BenchmarkLoad(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+func main() {
+	for i := 0; i < times; i++ {
 		if err := generateLoad(); err != nil {
-			b.Errorf("generateLoad failed: %v", err)
+			log.Panicf("generate load: %v", err)
 		}
 	}
 }
