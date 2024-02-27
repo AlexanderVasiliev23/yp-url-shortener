@@ -3,16 +3,14 @@ package storage
 import (
 	"context"
 	"errors"
-
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 )
 
-var (
-	// ErrNotFound missing godoc.
-	ErrNotFound = errors.New("not found")
-	// ErrAlreadyExists missing godoc.
-	ErrAlreadyExists = errors.New("already exists")
-)
+// ErrNotFound missing godoc.
+var ErrNotFound = errors.New("not found")
+
+// ErrAlreadyExists missing godoc.
+var ErrAlreadyExists = errors.New("already exists")
 
 // Storage missing godoc.
 type Storage interface {
