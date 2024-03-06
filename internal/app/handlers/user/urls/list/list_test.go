@@ -16,7 +16,7 @@ import (
 
 const (
 	defaultToken    = "test_token"
-	defaultAddr     = "test_addr"
+	defaultAddr     = "https://my_url_shortener"
 	defaultUserID   = 1234
 	defaultOriginal = "test_original"
 )

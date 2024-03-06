@@ -20,7 +20,7 @@ import (
 const (
 	path         = "/api/shorten"
 	defaultToken = "test_token"
-	addr         = "localhost:8080"
+	addr         = "https://my_url_shortener"
 )
 
 var (

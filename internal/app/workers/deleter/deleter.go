@@ -13,14 +13,17 @@ const (
 	defaultRepoDeletionTimeout = 30 * time.Second
 )
 
+// Repository missing godoc.
 type Repository interface {
 	DeleteByTokens(ctx context.Context, tokens []string) error
 }
 
+// DeleteTask missing godoc.
 type DeleteTask struct {
 	Tokens []string
 }
 
+// DeleteWorker missing godoc.
 type DeleteWorker struct {
 	repo                Repository
 	maxBatchSize        int
@@ -28,12 +31,14 @@ type DeleteWorker struct {
 	repoDeletionTimeout time.Duration
 }
 
+// Options missing godoc.
 type Options struct {
 	MaxBatchSize        int
 	SavingInterval      time.Duration
 	RepoDeletionTimeout time.Duration
 }
 
+// NewDeleteWorker missing godoc.
 func NewDeleteWorker(repo Repository, opts Options) *DeleteWorker {
 	worker := &DeleteWorker{
 		repo:                repo,
@@ -57,6 +62,7 @@ func NewDeleteWorker(repo Repository, opts Options) *DeleteWorker {
 	return worker
 }
 
+// Consume missing godoc.
 func (w DeleteWorker) Consume(ch <-chan DeleteTask) {
 	ticker := time.NewTicker(w.savingInterval)
 

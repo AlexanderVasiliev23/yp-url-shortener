@@ -7,11 +7,13 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 )
 
-var (
-	ErrNotFound      = errors.New("not found")
-	ErrAlreadyExists = errors.New("already exists")
-)
+// ErrNotFound missing godoc.
+var ErrNotFound = errors.New("not found")
 
+// ErrAlreadyExists missing godoc.
+var ErrAlreadyExists = errors.New("already exists")
+
+// Storage missing godoc.
 type Storage interface {
 	Add(ctx context.Context, shortLink *models.ShortLink) error
 	Get(ctx context.Context, token string) (link *models.ShortLink, err error)

@@ -6,8 +6,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// Log missing godoc.
 var Log *zap.SugaredLogger
 
+// Init missing godoc.
 func Init() error {
 	l, err := zap.NewProduction()
 	if err != nil {

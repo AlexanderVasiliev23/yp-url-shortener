@@ -33,10 +33,7 @@ func main() {
 	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(application.RunWorkers)
 	g.Go(application.Run)
-	profilerAddr := ":8081"
-	g.Go(func() error {
-		return http.ListenAndServe(profilerAddr, nil)
-	})
+	g.Go(profiler)
 
 	select {
 	case <-interrupt:
@@ -46,4 +43,9 @@ func main() {
 	if err := application.Shutdown(); err != nil {
 		logger.Log.Fatalln(err)
 	}
+}
+
+func profiler() error {
+	profilerAddr := ":8081"
+	return http.ListenAndServe(profilerAddr, nil)
 }

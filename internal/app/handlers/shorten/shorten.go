@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -14,6 +13,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 )
 
+// ErrURLIsEmpty missing godoc.
 var (
 	ErrURLIsEmpty = errors.New("url is empty")
 )
@@ -31,6 +31,7 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Shortener missing godoc.
 type Shortener struct {
 	repository         repository
 	tokenGenerator     tokenGenerator
@@ -38,6 +39,7 @@ type Shortener struct {
 	addr               string
 }
 
+// NewShortener missing godoc.
 func NewShortener(
 	repository repository,
 	tokenGenerator tokenGenerator,
@@ -52,6 +54,7 @@ func NewShortener(
 	}
 }
 
+// Handle missing godoc.
 func (h *Shortener) Handle(c echo.Context) error {
 	req := struct {
 		URL string
@@ -98,7 +101,7 @@ func (h *Shortener) Handle(c echo.Context) error {
 		}
 
 		c.Response().WriteHeader(http.StatusConflict)
-		response := resp{Result: fmt.Sprintf("%s/%s", h.addr, token)}
+		response := resp{Result: h.addr + "/" + token}
 		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
@@ -107,7 +110,7 @@ func (h *Shortener) Handle(c echo.Context) error {
 		return nil
 	}
 
-	response := resp{Result: fmt.Sprintf("%s/%s", h.addr, token)}
+	response := resp{Result: h.addr + "/" + token}
 	c.Response().WriteHeader(http.StatusCreated)
 	c.Response().Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {

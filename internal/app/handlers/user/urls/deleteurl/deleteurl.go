@@ -18,12 +18,14 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Handler missing godoc.
 type Handler struct {
 	linksStorage       linksStorage
 	userContextFetcher userContextFetcher
 	deleteByTokenCh    chan<- deleter.DeleteTask
 }
 
+// NewHandler missing godoc.
 func NewHandler(
 	linksStorage linksStorage,
 	userContextFetcher userContextFetcher,
@@ -36,6 +38,7 @@ func NewHandler(
 	}
 }
 
+// Delete missing godoc.
 func (h *Handler) Delete(c echo.Context) error {
 	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
 	if err != nil {

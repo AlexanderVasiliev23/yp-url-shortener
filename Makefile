@@ -21,7 +21,19 @@ golangci-lint-run:
                 -c .golangci.yml \
             > ./golangci-lint/report-unformatted.json
 
-mem-optimization-diff:
+save-base-profile:
+	curl http://127.0.0.1:8081/debug/pprof/heap > ./profiles/base.pprof
+
+save-result-profile:
+	curl http://127.0.0.1:8081/debug/pprof/heap > ./profiles/result.pprof
+
+show-base-profile:
+	go tool pprof -http=":9091" -seconds=30 ./profiles/base.pprof
+
+show-result-profile:
+	go tool pprof -http=":9092" -seconds=30 ./profiles/result.pprof
+
+base-result-profile-diff:
 	go tool pprof -top -diff_base=profiles/base.pprof profiles/result.pprof
 
 format-code:

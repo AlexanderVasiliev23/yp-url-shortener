@@ -15,6 +15,7 @@ import (
 
 var _ storage.Storage = (*Storage)(nil)
 
+// Storage missing godoc.
 type Storage struct {
 	wrappedStorage storage.Storage
 	file           *os.File
@@ -23,6 +24,7 @@ type Storage struct {
 	uuidGenerator  uuidgenerator.UUIDGenerator
 }
 
+// New missing godoc.
 func New(ctx context.Context, wrappedStorage storage.Storage, uuidGenerator uuidgenerator.UUIDGenerator, filepath string, bufferSize int) (*Storage, error) {
 	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
@@ -44,6 +46,7 @@ func New(ctx context.Context, wrappedStorage storage.Storage, uuidGenerator uuid
 	return s, nil
 }
 
+// Add missing godoc.
 func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	if err := s.wrappedStorage.Add(ctx, shortLink); err != nil {
 		return fmt.Errorf("adding to wrapped storage: %w", err)
@@ -60,10 +63,12 @@ func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 	return nil
 }
 
+// Get missing godoc.
 func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
 	return s.wrappedStorage.Get(ctx, token)
 }
 
+// SaveBatch missing godoc.
 func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
 	for _, shortLink := range shortLinks {
 		if err := s.Add(ctx, shortLink); err != nil {
@@ -74,14 +79,17 @@ func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink)
 	return nil
 }
 
+// GetTokenByURL missing godoc.
 func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
 	return s.wrappedStorage.GetTokenByURL(ctx, url)
 }
 
+// FindByUserID missing godoc.
 func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
 	return s.wrappedStorage.FindByUserID(ctx, userID)
 }
 
+// Dump missing godoc.
 func (s *Storage) Dump() error {
 	encoder := json.NewEncoder(s.file)
 
@@ -122,10 +130,12 @@ func (s *Storage) recoverDataFromFile(ctx context.Context) error {
 	return nil
 }
 
+// DeleteByTokens missing godoc.
 func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
 	return s.wrappedStorage.DeleteByTokens(ctx, tokens)
 }
 
+// FilterOnlyThisUserTokens missing godoc.
 func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
 	return s.wrappedStorage.FilterOnlyThisUserTokens(ctx, userID, tokens)
 }
