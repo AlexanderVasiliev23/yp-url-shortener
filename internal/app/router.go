@@ -11,7 +11,6 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten/batch"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/deleteurl"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/list"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/jwt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
 )
@@ -21,7 +20,8 @@ func (a *App) configureRouter() *echo.Echo {
 
 	e.Use(
 		logger.Middleware(),
-		gzip.Middleware(), // отключить для оптимизации
+		//gzip.Middleware(), // потребляет слишком много памяти, лучше использовать из echo
+		middleware.Gzip(),
 		middleware.Recover(),
 		jwt.Middleware(a.conf.JWTSecretKey),
 	)

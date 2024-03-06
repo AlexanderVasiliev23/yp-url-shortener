@@ -3,7 +3,6 @@ package batch
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -99,7 +98,7 @@ func (h *Shortener) Handle(c echo.Context) error {
 
 		respItem := respItem{
 			CorrelationID: requestItem.CorrelationID,
-			ShortURL:      fmt.Sprintf("%s/%s", h.addr, token),
+			ShortURL:      h.addr + "/" + token,
 		}
 
 		response = append(response, respItem)

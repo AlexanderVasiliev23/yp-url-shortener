@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -102,7 +101,7 @@ func (h *Shortener) Handle(c echo.Context) error {
 		}
 
 		c.Response().WriteHeader(http.StatusConflict)
-		response := resp{Result: fmt.Sprintf("%s/%s", h.addr, token)}
+		response := resp{Result: h.addr + "/" + token}
 		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
@@ -111,7 +110,7 @@ func (h *Shortener) Handle(c echo.Context) error {
 		return nil
 	}
 
-	response := resp{Result: fmt.Sprintf("%s/%s", h.addr, token)}
+	response := resp{Result: h.addr + "/" + token}
 	c.Response().WriteHeader(http.StatusCreated)
 	c.Response().Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {

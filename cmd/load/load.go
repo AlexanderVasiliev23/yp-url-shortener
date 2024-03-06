@@ -1,61 +1,108 @@
+// Генерация нагрузки для профилирования с использованием pprof
 package main
 
 import (
-	"log"
+	"fmt"
+	"github.com/brianvoe/gofakeit/v7"
 	"net/http"
-	"strings"
+	"time"
+
+	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
 
 const (
-	url   = "http://localhost:8080"
-	times = 300
+	url = "http://localhost:8080/"
 )
 
+// + GET /api/user/urls
+// + POST /api/shorten
+// + POST /api/shorten/batch
+// + POST /
+// + DELETE /api/user/urls
+// + GET /{token}
+
 func main() {
-	for i := 0; i < times; i++ {
-		if err := generateLoad(); err != nil {
-			log.Panicf("generate load: %v", err)
-		}
-	}
-}
+	rate := vegeta.Rate{Freq: 500, Per: time.Second}
+	duration := 20 * time.Second
 
-func generateLoad() error {
-	client := http.Client{}
-	for _, req := range buildRequests() {
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		resp.Body.Close()
+	targets := make([]vegeta.Target, 0, 10_000)
+
+	header := map[string][]string{
+		"Cookie": {"jwt_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjE3MDk3MTExNjE3NjY0MzY1NTF9.NsC8Xj88NwyaOou6p1sbkzchdzbgaEZOYDrUDfFh7HE"},
 	}
 
-	return nil
-}
+	// + DELETE /api/user/urls
+	for range 500 {
+		target := vegeta.Target{
+			Method: http.MethodDelete,
+			URL:    url + "api/user/urls",
+			Body:   []byte(`["iWQADUUloU","EuooaEIvNI","RlbUtAKMvS"]`),
+			Header: header,
+		}
+		targets = append(targets, target)
+	}
 
-func buildRequests() []*http.Request {
-	var requests []*http.Request
+	// + POST /api/shorten/batch
+	for range 500 {
+		target := vegeta.Target{
+			Method: http.MethodPost,
+			URL:    url + "api/shorten/batch",
+			Body:   []byte(fmt.Sprintf(`[{"correlation_id":"%s","original_url":"%s"}]`, gofakeit.UUID(), gofakeit.URL())),
+			Header: header,
+		}
+		targets = append(targets, target)
+	}
 
-	r, _ := http.NewRequest(http.MethodGet, url+"/token", nil)
-	requests = append(requests, r)
+	// + POST /api/shorten
+	for range 500 {
+		target := vegeta.Target{
+			Method: http.MethodPost,
+			URL:    url + "api/shorten",
+			Body:   []byte(fmt.Sprintf(`{"url":"%s"}`, gofakeit.URL())),
+			Header: header,
+		}
+		targets = append(targets, target)
+	}
 
-	r, _ = http.NewRequest(http.MethodGet, url+"/ping", nil)
-	requests = append(requests, r)
+	// + GET /api/user/urls
+	for range 500 {
+		target := vegeta.Target{
+			Method: http.MethodGet,
+			URL:    url + "api/user/urls",
+			Header: header,
+		}
+		targets = append(targets, target)
+	}
 
-	r, _ = http.NewRequest(http.MethodPost, url, strings.NewReader("http://test.me"))
-	requests = append(requests, r)
+	// + POST /
+	for range 500 {
+		target := vegeta.Target{
+			Method: http.MethodPost,
+			URL:    url,
+			Body:   []byte(gofakeit.URL()),
+			Header: header,
+		}
+		targets = append(targets, target)
+	}
 
-	r, _ = http.NewRequest(http.MethodPost, url+"/api/shorten", strings.NewReader(`{"url":"http://ip-api.com/json"}`))
-	requests = append(requests, r)
+	// + GET /{token}
+	for range 500 {
+		target := vegeta.Target{
+			Method: http.MethodGet,
+			URL:    url + gofakeit.LoremIpsumSentence(1),
+			Header: header,
+		}
+		targets = append(targets, target)
+	}
 
-	body := `[{"correlation_id": "a6c87844-3c0a-4854-980b-cf03414f8bac2","original_url": "http://i3nwibrmf.biz/jdr41md0/xh6ni3v3qii1"}]`
-	r, _ = http.NewRequest(http.MethodPost, url+"/api/shorten/batch", strings.NewReader(body))
-	requests = append(requests, r)
+	targeter := vegeta.NewStaticTargeter(targets...)
+	attacker := vegeta.NewAttacker()
 
-	r, _ = http.NewRequest(http.MethodGet, url+"/api/user/urls", nil)
-	requests = append(requests, r)
+	var metrics vegeta.Metrics
+	for res := range attacker.Attack(targeter, rate, duration, "Big Bang!") {
+		metrics.Add(res)
+	}
+	metrics.Close()
 
-	r, _ = http.NewRequest(http.MethodDelete, url+"/api/user/urls", strings.NewReader(`["token_to_delete"]`))
-	requests = append(requests, r)
-
-	return requests
+	fmt.Printf("99th percentile: %s\n", metrics.Latencies.P99)
 }

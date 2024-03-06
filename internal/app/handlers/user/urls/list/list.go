@@ -3,7 +3,6 @@ package list
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -69,7 +68,7 @@ func (h *Handler) List(c echo.Context) error {
 
 	for _, shortLink := range shortLinks {
 		response = append(response, respItem{
-			ShortURL:    fmt.Sprintf("%s/%s", h.addr, shortLink.Token),
+			ShortURL:    h.addr + "/" + shortLink.Token,
 			OriginalURL: shortLink.Original,
 		})
 	}
