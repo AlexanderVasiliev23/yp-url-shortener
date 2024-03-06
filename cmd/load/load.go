@@ -3,7 +3,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v7"
+	"github.com/brianvoe/gofakeit/v6"
 	"net/http"
 	"time"
 
