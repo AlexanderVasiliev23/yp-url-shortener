@@ -22,7 +22,7 @@ const (
 	correlationID2 = "correlationId2"
 	token1         = "token1"
 	token2         = "token2"
-	addr           = "test_addr"
+	addr           = "https://my_url_shortener"
 )
 
 var (
