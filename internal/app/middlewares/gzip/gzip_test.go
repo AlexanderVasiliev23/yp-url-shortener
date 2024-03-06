@@ -147,7 +147,7 @@ func compressString(s string) string {
 }
 
 func Benchmark_Middleware(b *testing.B) {
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		e := echo.New()
 		e.Use(Middleware())
 		e.POST("/", handler)

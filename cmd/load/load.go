@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// + DELETE /api/user/urls
-	for range 500 {
+	for i := 0; i < 500; i++ {
 		target := vegeta.Target{
 			Method: http.MethodDelete,
 			URL:    url + "api/user/urls",
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// + POST /api/shorten/batch
-	for range 500 {
+	for i := 0; i < 500; i++ {
 		target := vegeta.Target{
 			Method: http.MethodPost,
 			URL:    url + "api/shorten/batch",
@@ -54,7 +54,7 @@ func main() {
 	}
 
 	// + POST /api/shorten
-	for range 500 {
+	for i := 0; i < 500; i++ {
 		target := vegeta.Target{
 			Method: http.MethodPost,
 			URL:    url + "api/shorten",
@@ -65,7 +65,7 @@ func main() {
 	}
 
 	// + GET /api/user/urls
-	for range 500 {
+	for i := 0; i < 500; i++ {
 		target := vegeta.Target{
 			Method: http.MethodGet,
 			URL:    url + "api/user/urls",
@@ -75,7 +75,7 @@ func main() {
 	}
 
 	// + POST /
-	for range 500 {
+	for i := 0; i < 500; i++ {
 		target := vegeta.Target{
 			Method: http.MethodPost,
 			URL:    url,
@@ -86,7 +86,7 @@ func main() {
 	}
 
 	// + GET /{token}
-	for range 500 {
+	for i := 0; i < 500; i++ {
 		target := vegeta.Target{
 			Method: http.MethodGet,
 			URL:    url + gofakeit.LoremIpsumSentence(1),
