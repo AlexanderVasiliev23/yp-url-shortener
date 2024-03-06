@@ -1,8 +1,6 @@
 module github.com/AlexanderVasiliev23/yp-url-shortener
 
-go 1.22
-
-toolchain go1.22.0
+go 1.21
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.0.2
