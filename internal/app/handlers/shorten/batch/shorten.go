@@ -3,11 +3,12 @@ package batch
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"net/http"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 )
 
 type batchSaver interface {
@@ -26,6 +27,7 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Shortener missing godoc.
 type Shortener struct {
 	saver              batchSaver
 	tokenGenerator     tokenGenerator
@@ -34,6 +36,7 @@ type Shortener struct {
 	addr               string
 }
 
+// NewShortener missing godoc.
 func NewShortener(
 	saver batchSaver,
 	tokenGenerator tokenGenerator,
@@ -50,6 +53,7 @@ func NewShortener(
 	}
 }
 
+// Handle missing godoc.
 func (h *Shortener) Handle(c echo.Context) error {
 	type reqItem struct {
 		CorrelationID string `json:"correlation_id"`
@@ -94,7 +98,7 @@ func (h *Shortener) Handle(c echo.Context) error {
 
 		respItem := respItem{
 			CorrelationID: requestItem.CorrelationID,
-			ShortURL:      fmt.Sprintf("%s/%s", h.addr, token),
+			ShortURL:      h.addr + "/" + token,
 		}
 
 		response = append(response, respItem)

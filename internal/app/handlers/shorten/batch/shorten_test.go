@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 )
 
 const (
@@ -20,7 +22,7 @@ const (
 	correlationID2 = "correlationId2"
 	token1         = "token1"
 	token2         = "token2"
-	addr           = "test_addr"
+	addr           = "https://my_url_shortener"
 )
 
 var (

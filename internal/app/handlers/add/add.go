@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
+
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 )
 
 type repository interface {
@@ -25,6 +27,7 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Handler missing godoc.
 type Handler struct {
 	repository         repository
 	tokenGenerator     tokenGenerator
@@ -32,6 +35,7 @@ type Handler struct {
 	addr               string
 }
 
+// NewHandler missing godoc.
 func NewHandler(
 	repository repository,
 	tokenGenerator tokenGenerator,
@@ -46,6 +50,7 @@ func NewHandler(
 	}
 }
 
+// Add missing godoc.
 func (h *Handler) Add(c echo.Context) error {
 	url, err := io.ReadAll(c.Request().Body)
 	if err != nil || len(url) == 0 {

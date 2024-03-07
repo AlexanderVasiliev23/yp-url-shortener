@@ -1,3 +1,4 @@
+// Package tokengenerator Пакет для генерации уникальных токенов
 package tokengenerator
 
 import (
@@ -8,10 +9,13 @@ import (
 )
 
 var symbols = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+// ErrUniqueTokensRunOut missing godoc.
 var ErrUniqueTokensRunOut = errors.New("unique tokens run out")
 
 type token string
 
+// TokenGenerator объект генератора токенов
 type TokenGenerator struct {
 	generatedTokens map[token]struct{}
 	tokenLen        int
@@ -19,20 +23,7 @@ type TokenGenerator struct {
 	mu              sync.RWMutex
 }
 
-func (g *TokenGenerator) has(t token) bool {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	_, ok := g.generatedTokens[t]
-
-	return ok
-}
-
-func (g *TokenGenerator) add(t token) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.generatedTokens[t] = struct{}{}
-}
-
+// New конструктор
 func New(tokenLen int) *TokenGenerator {
 	return &TokenGenerator{
 		tokenLen:        tokenLen,
@@ -41,6 +32,7 @@ func New(tokenLen int) *TokenGenerator {
 	}
 }
 
+// Generate генерирует уникальный токен
 func (g *TokenGenerator) Generate() (string, error) {
 	if len(g.generatedTokens) >= g.maxTokensCount {
 		return "", ErrUniqueTokensRunOut
@@ -57,6 +49,20 @@ func (g *TokenGenerator) Generate() (string, error) {
 
 		return string(t), nil
 	}
+}
+
+func (g *TokenGenerator) has(t token) bool {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	_, ok := g.generatedTokens[t]
+
+	return ok
+}
+
+func (g *TokenGenerator) add(t token) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.generatedTokens[t] = struct{}{}
 }
 
 func (g *TokenGenerator) generateRandom() token {

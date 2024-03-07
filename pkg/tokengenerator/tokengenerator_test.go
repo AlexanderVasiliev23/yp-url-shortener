@@ -33,3 +33,13 @@ func TestTokenGenerator_Generate_UniqueTokensRunOut(t *testing.T) {
 	_, err := tokGen.Generate()
 	assert.ErrorIs(t, ErrUniqueTokensRunOut, err)
 }
+
+func Benchmark_Generate(b *testing.B) {
+	const tokenLen = 8
+
+	tokGen := New(tokenLen)
+
+	for i := 0; i < b.N; i++ {
+		_, _ = tokGen.Generate()
+	}
+}

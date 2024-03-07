@@ -4,17 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 )
 
 const (
 	defaultToken    = "test_token"
-	defaultAddr     = "test_addr"
+	defaultAddr     = "https://my_url_shortener"
 	defaultUserID   = 1234
 	defaultOriginal = "test_original"
 )

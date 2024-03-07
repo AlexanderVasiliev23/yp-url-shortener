@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
-	"golang.org/x/sync/errgroup"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/configs"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 )
 
 func main() {
@@ -29,6 +33,7 @@ func main() {
 	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(application.RunWorkers)
 	g.Go(application.Run)
+	g.Go(profiler)
 
 	select {
 	case <-interrupt:
@@ -38,4 +43,9 @@ func main() {
 	if err := application.Shutdown(); err != nil {
 		logger.Log.Fatalln(err)
 	}
+}
+
+func profiler() error {
+	profilerAddr := ":8081"
+	return http.ListenAndServe(profilerAddr, nil)
 }

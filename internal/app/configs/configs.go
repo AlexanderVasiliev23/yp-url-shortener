@@ -16,6 +16,7 @@ const (
 	defaultDebug                 = false
 )
 
+// Config missing godoc.
 type Config struct {
 	Addr                  string
 	BaseAddress           string
@@ -29,10 +30,12 @@ type Config struct {
 	DeleteWorkerConfig DeleteWorkerConfig
 }
 
+// DeleteWorkerConfig missing godoc.
 type DeleteWorkerConfig struct {
 	RepoTimeout time.Duration
 }
 
+// MustConfigure missing godoc.
 func MustConfigure() *Config {
 	conf := &Config{}
 

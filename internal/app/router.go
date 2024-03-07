@@ -1,6 +1,10 @@
 package app
 
 import (
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/add"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/get"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/ping"
@@ -8,11 +12,8 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten/batch"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/deleteurl"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/list"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/jwt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 func (a *App) configureRouter() *echo.Echo {
@@ -20,7 +21,10 @@ func (a *App) configureRouter() *echo.Echo {
 
 	e.Use(
 		logger.Middleware(),
+		// касмтомная gzip middleware потребляет очень много памяти, но необходима для прохождения тестов
+		// для того, чтобы лучше видеть потребление памяти, при замерах отключал этот middleware и включал middleware из echo
 		gzip.Middleware(),
+		//middleware.Gzip(),
 		middleware.Recover(),
 		jwt.Middleware(a.conf.JWTSecretKey),
 	)

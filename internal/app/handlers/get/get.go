@@ -2,8 +2,9 @@ package get
 
 import (
 	"context"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"net/http"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 
 	"github.com/labstack/echo/v4"
 )
@@ -12,14 +13,17 @@ type repository interface {
 	Get(ctx context.Context, token string) (*models.ShortLink, error)
 }
 
+// Handler missing godoc.
 type Handler struct {
 	repository repository
 }
 
+// NewHandler missing godoc.
 func NewHandler(repository repository) *Handler {
 	return &Handler{repository: repository}
 }
 
+// Get missing godoc.
 func (h *Handler) Get(c echo.Context) error {
 	token := c.Param("token")
 

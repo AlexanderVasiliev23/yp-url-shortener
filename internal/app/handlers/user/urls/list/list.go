@@ -3,10 +3,11 @@ package list
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/labstack/echo/v4"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 )
 
 type linksStorage interface {
@@ -17,12 +18,14 @@ type userContextFetcher interface {
 	GetUserIDFromContext(ctx context.Context) (int, error)
 }
 
+// Handler missing godoc.
 type Handler struct {
 	storage            linksStorage
 	userContextFetcher userContextFetcher
 	addr               string
 }
 
+// NewHandler missing godoc.
 func NewHandler(
 	storage linksStorage,
 	userContextFetcher userContextFetcher,
@@ -35,6 +38,7 @@ func NewHandler(
 	}
 }
 
+// List missing godoc.
 func (h *Handler) List(c echo.Context) error {
 	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
@@ -64,7 +68,7 @@ func (h *Handler) List(c echo.Context) error {
 
 	for _, shortLink := range shortLinks {
 		response = append(response, respItem{
-			ShortURL:    fmt.Sprintf("%s/%s", h.addr, shortLink.Token),
+			ShortURL:    h.addr + "/" + shortLink.Token,
 			OriginalURL: shortLink.Original,
 		})
 	}

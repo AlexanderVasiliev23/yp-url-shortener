@@ -3,15 +3,17 @@ package deleteurl
 import (
 	"context"
 	"errors"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 )
 
 var (
