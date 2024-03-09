@@ -38,3 +38,6 @@ base-result-profile-diff:
 
 format-code:
 	goimports -local "github.com/AlexanderVasiliev23/yp-url-shortener" -w ./..
+
+multichecker:
+	go run cmd/staticlint/main.go ./...

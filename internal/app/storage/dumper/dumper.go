@@ -18,10 +18,10 @@ var _ storage.Storage = (*Storage)(nil)
 // Storage missing godoc.
 type Storage struct {
 	wrappedStorage storage.Storage
+	uuidGenerator  uuidgenerator.UUIDGenerator
 	file           *os.File
 	notSyncedYet   []*models.ShortLink
 	bufferSize     int
-	uuidGenerator  uuidgenerator.UUIDGenerator
 }
 
 // New missing godoc.

@@ -12,7 +12,7 @@ import (
 
 // Example демонстрация работы обработчика сохранения ссылки и получения токена для нее
 func Example() {
-	tokenGenerator := func() tokenGenerator {
+	_tokenGenerator := func() tokenGenerator {
 		tokens := []string{token1, token2}
 		tokensChan := make(chan string, len(tokens))
 		for _, token := range tokens {
@@ -23,7 +23,7 @@ func Example() {
 
 	handler := NewShortener(
 		batchSaverMock{},
-		tokenGenerator,
+		_tokenGenerator,
 		google.UUIDGenerator{},
 		&mock.UserContextFetcherMock{},
 		addr).Handle

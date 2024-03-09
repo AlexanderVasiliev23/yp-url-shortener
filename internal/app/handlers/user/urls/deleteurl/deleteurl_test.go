@@ -21,8 +21,8 @@ var (
 )
 
 type storageMock struct {
-	result []string
 	err    error
+	result []string
 }
 
 func (m storageMock) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
@@ -31,18 +31,17 @@ func (m storageMock) FilterOnlyThisUserTokens(ctx context.Context, userID int, t
 
 func TestDelete(t *testing.T) {
 	type want struct {
-		code  int
 		err   error
 		tasks []deleter.DeleteTask
+		code  int
 	}
 
 	testCases := []struct {
-		name string
-		body string
-		want want
-
-		userContextFetcher userContextFetcher
 		linksStorage       storageMock
+		userContextFetcher userContextFetcher
+		name               string
+		body               string
+		want               want
 	}{
 		{
 			name: "success",

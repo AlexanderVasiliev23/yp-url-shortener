@@ -77,7 +77,7 @@ func New(ctx context.Context, conf *configs.Config) *App {
 	}
 	a.storage = storageObj
 	a.tokenGenerator = tokengenerator.New(conf.TokenLen)
-	a.router = a.configureRouter()
+	a.router = a.configureRouter(ctx)
 
 	return a
 }

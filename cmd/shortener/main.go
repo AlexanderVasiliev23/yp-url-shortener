@@ -46,6 +46,7 @@ func main() {
 }
 
 func profiler() error {
+
 	profilerAddr := ":8081"
 	return http.ListenAndServe(profilerAddr, nil)
 }

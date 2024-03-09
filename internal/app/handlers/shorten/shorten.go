@@ -94,14 +94,14 @@ func (h *Shortener) Handle(c echo.Context) error {
 			return err
 		}
 
-		token, err := h.repository.GetTokenByURL(c.Request().Context(), req.URL)
+		_token, err := h.repository.GetTokenByURL(c.Request().Context(), req.URL)
 		if err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err
 		}
 
 		c.Response().WriteHeader(http.StatusConflict)
-		response := resp{Result: h.addr + "/" + token}
+		response := resp{Result: h.addr + "/" + _token}
 		if err := json.NewEncoder(c.Response().Writer).Encode(response); err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return err

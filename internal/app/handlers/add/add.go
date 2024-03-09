@@ -77,14 +77,14 @@ func (h *Handler) Add(c echo.Context) error {
 			return nil
 		}
 
-		token, err := h.repository.GetTokenByURL(c.Request().Context(), string(url))
+		_token, err := h.repository.GetTokenByURL(c.Request().Context(), string(url))
 		if err != nil {
 			c.Response().WriteHeader(http.StatusInternalServerError)
 			return nil
 		}
 
 		c.Response().WriteHeader(http.StatusConflict)
-		_, _ = fmt.Fprintf(c.Response(), "%s/%s", h.addr, token)
+		_, _ = fmt.Fprintf(c.Response(), "%s/%s", h.addr, _token)
 
 		return nil
 	}

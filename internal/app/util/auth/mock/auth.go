@@ -4,8 +4,8 @@ import "context"
 
 // UserContextFetcherMock missing godoc.
 type UserContextFetcherMock struct {
-	UserID int
 	Err    error
+	UserID int
 }
 
 // GetUserIDFromContext missing godoc.

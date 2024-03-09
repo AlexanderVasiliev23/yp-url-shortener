@@ -51,16 +51,16 @@ func (t tokenGeneratorMock) Generate() (string, error) {
 
 func TestShorten(t *testing.T) {
 	type want struct {
-		code int
-		body string
 		err  error
+		body string
+		code int
 	}
 
 	testCases := []struct {
-		name               string
 		userContextFetcher userContextFetcher
 		tokenGenerator     tokenGenerator
 		batchSaver         batchSaverMock
+		name               string
 		reqBody            string
 		want               want
 	}{
