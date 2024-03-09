@@ -5,6 +5,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// OsExitAnalyzer missing godoc.
 var OsExitAnalyzer = &analysis.Analyzer{
 	Name: "errcheck",
 	Doc:  "checks if os.Exit() is using in main() function",

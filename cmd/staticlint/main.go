@@ -14,8 +14,7 @@
     - bodyclose проверяет, что не забыли закрыть resp.Body после получения ответа при http запросе
 
  5. Добавлен самописный анализатор osexitchecker, который проверяет, что в пакете main в функции main напрямую не вызывается функция os.Exit()
-*/
-package main
+*/package main
 
 import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/pkg/osexitchecker"
