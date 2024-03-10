@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -15,7 +16,15 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/logger"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
+	printBuildInfo()
+
 	conf := configs.MustConfigure()
 
 	if err := logger.Init(); err != nil {
@@ -46,7 +55,12 @@ func main() {
 }
 
 func profiler() error {
-
 	profilerAddr := ":8081"
 	return http.ListenAndServe(profilerAddr, nil)
+}
+
+func printBuildInfo() {
+	fmt.Println("Build version:", buildVersion)
+	fmt.Println("Build date:", buildDate)
+	fmt.Println("Build commit:", buildCommit)
 }

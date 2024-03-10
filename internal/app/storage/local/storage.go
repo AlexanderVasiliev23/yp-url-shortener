@@ -7,6 +7,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator"
+	"sync"
 )
 
 var _ storage.Storage = (*Storage)(nil)
@@ -23,6 +24,8 @@ type Storage struct {
 	tokenToShortLinkMap  map[string]*models.ShortLink
 	urlToShortLinkMap    map[string]*models.ShortLink
 	userIDToShortLinkMap map[int][]*models.ShortLink
+
+	mu sync.Mutex
 }
 
 // New missing godoc.
@@ -32,11 +35,15 @@ func New(uuidGenerator uuidgenerator.UUIDGenerator) *Storage {
 		tokenToShortLinkMap:  make(map[string]*models.ShortLink),
 		urlToShortLinkMap:    make(map[string]*models.ShortLink),
 		userIDToShortLinkMap: make(map[int][]*models.ShortLink),
+		mu:                   sync.Mutex{},
 	}
 }
 
 // Add missing godoc.
-func (s Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
+func (s *Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.urlToShortLinkMap[shortLink.Original]; ok {
 		return storage.ErrAlreadyExists
 	}
@@ -49,7 +56,10 @@ func (s Storage) Add(ctx context.Context, shortLink *models.ShortLink) error {
 }
 
 // Get missing godoc.
-func (s Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
+func (s *Storage) Get(ctx context.Context, token string) (*models.ShortLink, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	shortLink, ok := s.tokenToShortLinkMap[token]
 	if ok {
 		return shortLink, nil
@@ -59,7 +69,7 @@ func (s Storage) Get(ctx context.Context, token string) (*models.ShortLink, erro
 }
 
 // SaveBatch missing godoc.
-func (s Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
+func (s *Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
 	for _, shortLink := range shortLinks {
 		if err := s.Add(ctx, shortLink); err != nil {
 			return fmt.Errorf("add one short link: %w", err)
@@ -70,7 +80,10 @@ func (s Storage) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) 
 }
 
 // GetTokenByURL missing godoc.
-func (s Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
+func (s *Storage) GetTokenByURL(ctx context.Context, url string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	shortLink, ok := s.urlToShortLinkMap[url]
 	if !ok {
 		return "", storage.ErrNotFound
@@ -80,12 +93,18 @@ func (s Storage) GetTokenByURL(ctx context.Context, url string) (string, error) 
 }
 
 // FindByUserID missing godoc.
-func (s Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
+func (s *Storage) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.userIDToShortLinkMap[userID], nil
 }
 
 // DeleteByTokens missing godoc.
-func (s Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	for _, token := range tokens {
 		shortLink, ok := s.tokenToShortLinkMap[token]
 		if !ok {
@@ -99,7 +118,10 @@ func (s Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
 }
 
 // FilterOnlyThisUserTokens missing godoc.
-func (s Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	result := make([]string, 0, len(tokens))
 
 	for _, token := range tokens {
