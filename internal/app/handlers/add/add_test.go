@@ -28,8 +28,8 @@ var (
 )
 
 type mockTokenGenerator struct {
-	token string
 	err   error
+	token string
 }
 
 func (m mockTokenGenerator) Generate() (string, error) {
@@ -51,8 +51,8 @@ func (m mockRepo) GetTokenByURL(ctx context.Context, url string) (string, error)
 
 func TestAdd(t *testing.T) {
 	type want struct {
-		code int
 		body string
+		code int
 	}
 
 	tests := []struct {

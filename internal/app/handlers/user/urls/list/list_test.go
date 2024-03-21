@@ -26,8 +26,8 @@ var (
 )
 
 type userContextFetcherMock struct {
-	userID int
 	err    error
+	userID int
 }
 
 func (f userContextFetcherMock) GetUserIDFromContext(ctx context.Context) (int, error) {
@@ -35,8 +35,8 @@ func (f userContextFetcherMock) GetUserIDFromContext(ctx context.Context) (int, 
 }
 
 type storageMock struct {
-	result []*models.ShortLink
 	err    error
+	result []*models.ShortLink
 }
 
 func (s storageMock) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
@@ -45,15 +45,15 @@ func (s storageMock) FindByUserID(ctx context.Context, userID int) ([]*models.Sh
 
 func TestUrls(t *testing.T) {
 	type want struct {
-		code int
-		body string
 		err  error
+		body string
+		code int
 	}
 
 	testCases := []struct {
+		userContextFetcherMock *userContextFetcherMock
 		name                   string
 		storage                storageMock
-		userContextFetcherMock *userContextFetcherMock
 		want                   want
 	}{
 		{

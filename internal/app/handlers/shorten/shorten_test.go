@@ -30,8 +30,8 @@ var (
 )
 
 type tokenGeneratorMock struct {
-	token string
 	err   error
+	token string
 }
 
 func (t tokenGeneratorMock) Generate() (string, error) {
@@ -58,18 +58,18 @@ func TestShorten(t *testing.T) {
 	}
 
 	type want struct {
-		code int
-		body string
 		err  error
+		body string
+		code int
 	}
 
 	testCases := []struct {
-		name               string
-		request            request
-		want               want
 		tokenGenerator     tokenGenerator
 		repository         repository
 		userContextFetcher userContextFetcher
+		request            request
+		name               string
+		want               want
 	}{
 		{
 			name: "success",

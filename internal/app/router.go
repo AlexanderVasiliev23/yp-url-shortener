@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -16,7 +17,7 @@ import (
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
 )
 
-func (a *App) configureRouter() *echo.Echo {
+func (a *App) configureRouter(ctx context.Context) *echo.Echo {
 	e := echo.New()
 
 	e.Use(
@@ -26,7 +27,7 @@ func (a *App) configureRouter() *echo.Echo {
 		gzip.Middleware(),
 		//middleware.Gzip(),
 		middleware.Recover(),
-		jwt.Middleware(a.conf.JWTSecretKey),
+		jwt.Middleware(ctx, a.conf.JWTSecretKey),
 	)
 
 	addHandler := add.NewHandler(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)

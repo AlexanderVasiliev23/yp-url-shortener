@@ -38,3 +38,9 @@ base-result-profile-diff:
 
 format-code:
 	goimports -local "github.com/AlexanderVasiliev23/yp-url-shortener" -w ./..
+
+multichecker:
+	go run cmd/staticlint/main.go ./...
+
+run-shortener-with-build-flags:
+	go run -ldflags "-X main.buildVersion=1.2.3 -X 'main.buildDate=$(date +'%Y-%m-%d %H:%M:%S')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" ./cmd/shortener/.

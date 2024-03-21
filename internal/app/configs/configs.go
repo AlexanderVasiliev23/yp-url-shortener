@@ -20,14 +20,13 @@ const (
 type Config struct {
 	Addr                  string
 	BaseAddress           string
-	TokenLen              int
 	StorageFilePath       string
-	FileStorageBufferSize int
 	DatabaseDSN           string
 	JWTSecretKey          string
+	TokenLen              int
+	FileStorageBufferSize int
+	DeleteWorkerConfig    DeleteWorkerConfig
 	Debug                 bool
-
-	DeleteWorkerConfig DeleteWorkerConfig
 }
 
 // DeleteWorkerConfig missing godoc.

@@ -33,8 +33,8 @@ func (m mockRepo) Get(ctx context.Context, s string) (*models.ShortLink, error) 
 
 func TestGet(t *testing.T) {
 	type want struct {
-		code           int
 		locationHeader string
+		code           int
 	}
 
 	tests := []struct {

@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -44,7 +45,7 @@ func Auth(JWTSecretKey string) echo.MiddlewareFunc {
 }
 
 // Middleware missing godoc.
-func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
+func Middleware(ctx context.Context, JWTSecretKey string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID, err := getUserIDFromCookie(c, JWTSecretKey)
@@ -56,9 +57,9 @@ func Middleware(JWTSecretKey string) echo.MiddlewareFunc {
 
 				if errors.Is(err, errCookieNotFound) || errors.Is(err, errTokenParsing) || errors.Is(err, errInvalidJWT) {
 					userID = generateUserID()
-					if err := setCookie(c, userID, JWTSecretKey); err != nil {
+					if _err := setCookie(c, userID, JWTSecretKey); _err != nil {
 						c.Response().WriteHeader(http.StatusInternalServerError)
-						return err
+						return _err
 					}
 				} else {
 					c.Response().WriteHeader(http.StatusInternalServerError)

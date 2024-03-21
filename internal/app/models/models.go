@@ -8,11 +8,11 @@ import (
 
 // ShortLink missing godoc.
 type ShortLink struct {
+	DeletedAt *time.Time
 	ID        string `json:"id"`
 	Token     string `json:"token"`
 	Original  string `json:"original"`
 	UserID    int    `json:"user_id"`
-	DeletedAt *time.Time
 }
 
 // NewShortLink missing godoc.

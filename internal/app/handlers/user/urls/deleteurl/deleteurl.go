@@ -47,9 +47,9 @@ func (h *Handler) Delete(c echo.Context) error {
 	}
 
 	var reqBody []string
-	if err := json.NewDecoder(c.Request().Body).Decode(&reqBody); err != nil {
+	if _err := json.NewDecoder(c.Request().Body).Decode(&reqBody); _err != nil {
 		c.Response().WriteHeader(http.StatusBadRequest)
-		return err
+		return _err
 	}
 
 	tokens, err := h.linksStorage.FilterOnlyThisUserTokens(c.Request().Context(), userID, reqBody)

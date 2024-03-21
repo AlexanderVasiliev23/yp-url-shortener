@@ -96,12 +96,12 @@ func (h *Shortener) Handle(c echo.Context) error {
 		shortLink := models.NewShortLink(userID, h.uuidGenerator.Generate(), token, requestItem.OriginalURL)
 		toSave = append(toSave, shortLink)
 
-		respItem := respItem{
+		_respItem := respItem{
 			CorrelationID: requestItem.CorrelationID,
 			ShortURL:      h.addr + "/" + token,
 		}
 
-		response = append(response, respItem)
+		response = append(response, _respItem)
 	}
 
 	if err := h.saver.SaveBatch(c.Request().Context(), toSave); err != nil {
