@@ -27,6 +27,7 @@ type Config struct {
 	FileStorageBufferSize int
 	DeleteWorkerConfig    DeleteWorkerConfig
 	Debug                 bool
+	EnableHTTPS           bool
 }
 
 // DeleteWorkerConfig missing godoc.
@@ -44,6 +45,7 @@ func MustConfigure() *Config {
 	flag.StringVar(&conf.StorageFilePath, "f", defaultStorageFilePath, "storage file path")
 	flag.IntVar(&conf.FileStorageBufferSize, "file-storage-buffer-size", defaultFileStorageBufferSize, "size of file storage buffer")
 	flag.StringVar(&conf.DatabaseDSN, "d", "", "db data source name")
+	flag.BoolVar(&conf.EnableHTTPS, "s", false, "enable HTTPS")
 
 	flag.Parse()
 
@@ -75,6 +77,14 @@ func MustConfigure() *Config {
 			panic(fmt.Errorf("parsing debug env as bool: %w", err))
 		}
 		conf.Debug = asBool
+	}
+
+	if enableHTTPS, set := os.LookupEnv("ENABLE_HTTPS"); set {
+		asBool, err := strconv.ParseBool(enableHTTPS)
+		if err != nil {
+			panic(fmt.Errorf("parsing enableHTTPS env as bool: %w", err))
+		}
+		conf.EnableHTTPS = asBool
 	}
 
 	conf.DeleteWorkerConfig = DeleteWorkerConfig{
