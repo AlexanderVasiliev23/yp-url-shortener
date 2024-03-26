@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -47,7 +48,14 @@ func MustConfigure() *Config {
 	flag.StringVar(&conf.DatabaseDSN, "d", "", "db data source name")
 	flag.BoolVar(&conf.EnableHTTPS, "s", false, "enable HTTPS")
 
+	var configFilePath string
+	flag.StringVar(&configFilePath, "c", "", "path to config JSON file")
+
 	flag.Parse()
+
+	if path, set := os.LookupEnv("CONFIG"); set {
+		configFilePath = path
+	}
 
 	if addr, set := os.LookupEnv("SERVER_ADDRESS"); set {
 		conf.Addr = addr
@@ -89,6 +97,53 @@ func MustConfigure() *Config {
 
 	conf.DeleteWorkerConfig = DeleteWorkerConfig{
 		RepoTimeout: 30 * time.Second,
+	}
+
+	if configFilePath != "" {
+		fileContent, err := os.ReadFile(configFilePath)
+		if err != nil {
+			panic(fmt.Errorf("read config file %s: %w", configFilePath, err))
+		}
+
+		configFromFile := struct {
+			ServerAddress         string `json:"server_address"`
+			BaseURL               string `json:"base_url"`
+			FileStoragePath       string `json:"file_storage_path"`
+			DatabaseDSN           string `json:"database_dsn"`
+			EnableHTTPS           bool   `json:"enable_https"`
+			TokenLen              int    `json:"token_len"`
+			FileStorageBufferSize int    `json:"file_storage_buffer_size"`
+		}{}
+
+		if err := json.Unmarshal(fileContent, &configFromFile); err != nil {
+			panic(fmt.Errorf("unmarshal config file %s: %w", configFilePath, err))
+		}
+
+		if configFromFile.ServerAddress != "" {
+			conf.Addr = configFromFile.ServerAddress
+		}
+
+		if configFromFile.BaseURL != "" {
+			conf.BaseAddress = configFromFile.BaseURL
+		}
+
+		if configFromFile.FileStoragePath != "" {
+			conf.StorageFilePath = configFromFile.FileStoragePath
+		}
+
+		if configFromFile.DatabaseDSN != "" {
+			conf.DatabaseDSN = configFromFile.DatabaseDSN
+		}
+
+		if configFromFile.TokenLen > 0 {
+			conf.TokenLen = configFromFile.TokenLen
+		}
+
+		if configFromFile.FileStorageBufferSize > 0 {
+			conf.FileStorageBufferSize = configFromFile.FileStorageBufferSize
+		}
+
+		conf.EnableHTTPS = configFromFile.EnableHTTPS
 	}
 
 	return conf
