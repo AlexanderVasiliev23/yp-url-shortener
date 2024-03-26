@@ -37,7 +37,7 @@ func main() {
 	application := app.New(ctx, conf)
 
 	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(application.RunWorkers)
