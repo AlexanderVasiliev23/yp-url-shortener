@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/ip"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -22,7 +23,12 @@ func NewHandler(repo repository, trustedSubnet string) *Handler {
 }
 
 func (h *Handler) Handle(c echo.Context) error {
-	if h.trustedSubnet == "" {
+	isTrusted, err := iputil.IsTrusted(iputil.IpFromRequest(c.Request()), h.trustedSubnet)
+	if err != nil {
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	if !isTrusted {
 		c.Response().WriteHeader(http.StatusForbidden)
 		return nil
 	}
