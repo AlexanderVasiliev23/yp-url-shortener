@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// IPHeader const
 const (
 	IPHeader = "X-Real-IP"
 )
