@@ -29,6 +29,7 @@ type Config struct {
 	DeleteWorkerConfig    DeleteWorkerConfig
 	Debug                 bool
 	EnableHTTPS           bool
+	TrustedSubnet         string
 }
 
 // DeleteWorkerConfig missing godoc.
@@ -47,6 +48,7 @@ func MustConfigure() *Config {
 	flag.IntVar(&conf.FileStorageBufferSize, "file-storage-buffer-size", defaultFileStorageBufferSize, "size of file storage buffer")
 	flag.StringVar(&conf.DatabaseDSN, "d", "", "db data source name")
 	flag.BoolVar(&conf.EnableHTTPS, "s", false, "enable HTTPS")
+	flag.StringVar(&conf.TrustedSubnet, "t", "", "trusted subnet")
 
 	var configFilePath string
 	flag.StringVar(&configFilePath, "c", "", "path to config JSON file")
@@ -69,8 +71,12 @@ func MustConfigure() *Config {
 		conf.StorageFilePath = storageFilePath
 	}
 
-	if DatabaseDSN, set := os.LookupEnv("DATABASE_DSN"); set {
-		conf.DatabaseDSN = DatabaseDSN
+	if databaseDSN, set := os.LookupEnv("DATABASE_DSN"); set {
+		conf.DatabaseDSN = databaseDSN
+	}
+
+	if trustedSubnet, set := os.LookupEnv("TRUSTED_SUBNET"); set {
+		conf.TrustedSubnet = trustedSubnet
 	}
 
 	conf.JWTSecretKey = defaultJWTSecretKey
@@ -113,6 +119,7 @@ func MustConfigure() *Config {
 			EnableHTTPS           bool   `json:"enable_https"`
 			TokenLen              int    `json:"token_len"`
 			FileStorageBufferSize int    `json:"file_storage_buffer_size"`
+			TrustedSubnet         string `json:"trusted_subnet"`
 		}{}
 
 		if err := json.Unmarshal(fileContent, &configFromFile); err != nil {
@@ -141,6 +148,10 @@ func MustConfigure() *Config {
 
 		if configFromFile.FileStorageBufferSize > 0 {
 			conf.FileStorageBufferSize = configFromFile.FileStorageBufferSize
+		}
+
+		if configFromFile.TrustedSubnet != "" {
+			conf.TrustedSubnet = configFromFile.TrustedSubnet
 		}
 
 		conf.EnableHTTPS = configFromFile.EnableHTTPS

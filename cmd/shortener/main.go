@@ -44,6 +44,10 @@ func main() {
 	g.Go(application.Run)
 	g.Go(profiler)
 
+	if err := g.Wait(); err != nil {
+		logger.Log.Error(err)
+	}
+
 	select {
 	case <-interrupt:
 	case <-gCtx.Done():

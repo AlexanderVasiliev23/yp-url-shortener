@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"os"
 	"testing"
 
@@ -58,6 +59,10 @@ func (m mockStorage) DeleteByTokens(ctx context.Context, tokens []string) error 
 }
 
 func (m mockStorage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
+	return nil, nil
+}
+
+func (m mockStorage) Stats(ctx context.Context) (*storage.StatsOutDTO, error) {
 	return nil, nil
 }
 

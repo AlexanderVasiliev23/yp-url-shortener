@@ -139,3 +139,8 @@ func (s *Storage) DeleteByTokens(ctx context.Context, tokens []string) error {
 func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
 	return s.wrappedStorage.FilterOnlyThisUserTokens(ctx, userID, tokens)
 }
+
+// Stats missing godoc.
+func (s *Storage) Stats(ctx context.Context) (*storage.StatsOutDTO, error) {
+	return s.wrappedStorage.Stats(ctx)
+}

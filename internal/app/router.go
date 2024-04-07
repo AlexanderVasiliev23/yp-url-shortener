@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/stats"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -37,12 +38,14 @@ func (a *App) configureRouter(ctx context.Context) *echo.Echo {
 	pingHandler := ping.NewHandler(a.dbConn)
 	listHandler := list.NewHandler(a.storage, a.userContextFetcher, a.conf.BaseAddress)
 	deleteHandler := deleteurl.NewHandler(a.storage, a.userContextFetcher, a.deleteByTokenCh)
+	statsHandler := stats.NewHandler(a.storage, a.conf.TrustedSubnet)
 
 	e.GET("/:token", getHandler.Get)
 	e.GET("/ping", pingHandler.Ping)
 	e.POST("/", addHandler.Add)
 	e.POST("/api/shorten", shortener.Handle)
 	e.POST("/api/shorten/batch", batchShortener.Handle)
+	e.GET("/api/internal/stats", statsHandler.Handle)
 
 	g := e.Group("/api/user", jwt.Auth(a.conf.JWTSecretKey))
 	g.GET("/urls", listHandler.List)

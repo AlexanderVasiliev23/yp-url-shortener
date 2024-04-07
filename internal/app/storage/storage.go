@@ -13,6 +13,11 @@ var ErrNotFound = errors.New("not found")
 // ErrAlreadyExists missing godoc.
 var ErrAlreadyExists = errors.New("already exists")
 
+type StatsOutDTO struct {
+	UrlsCount  int
+	UsersCount int
+}
+
 // Storage missing godoc.
 type Storage interface {
 	Add(ctx context.Context, shortLink *models.ShortLink) error
@@ -22,4 +27,5 @@ type Storage interface {
 	FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error)
 	DeleteByTokens(ctx context.Context, tokens []string) error
 	FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error)
+	Stats(ctx context.Context) (*StatsOutDTO, error)
 }
