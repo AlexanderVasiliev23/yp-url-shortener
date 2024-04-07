@@ -107,12 +107,12 @@ func TestIsTrusted(t *testing.T) {
 	}
 }
 
-func TestIpFromRequest(t *testing.T) {
+func TestIPFromRequest(t *testing.T) {
 	ip := "127.0.0.1"
 
 	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	require.NoError(t, err)
-	req.Header.Set(IpHeader, ip)
+	req.Header.Set(IPHeader, ip)
 
-	assert.Equal(t, ip, IpFromRequest(req))
+	assert.Equal(t, ip, IPFromRequest(req))
 }

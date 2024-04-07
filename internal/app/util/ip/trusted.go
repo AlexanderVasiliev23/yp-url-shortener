@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	IpHeader = "X-Real-IP"
+	IPHeader = "X-Real-IP"
 )
 
 func IsTrusted(ip string, trustedSubnet string) (bool, error) {
@@ -28,6 +28,6 @@ func IsTrusted(ip string, trustedSubnet string) (bool, error) {
 	return ipNet.Contains(parsedIP), nil
 }
 
-func IpFromRequest(request *http.Request) string {
-	return request.Header.Get(IpHeader)
+func IPFromRequest(request *http.Request) string {
+	return request.Header.Get(IPHeader)
 }

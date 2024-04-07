@@ -17,7 +17,7 @@ const (
 	defaultUrlsCount           = 45
 	defaultUsersCount          = 23
 	defaultTrustedSubnet       = "127.0.0.1/24"
-	defaultIpAddress           = "127.0.0.1"
+	defaultIPAddress           = "127.0.0.1"
 	defaultNotTrustedIPAddress = "123.123.123.123"
 )
 
@@ -49,7 +49,7 @@ func TestHandle(t *testing.T) {
 	}{
 		{
 			name: "success",
-			ip:   defaultIpAddress,
+			ip:   defaultIPAddress,
 			repo: &repositoryMock{
 				statusOutDTO: &storage.StatsOutDTO{
 					UrlsCount:  defaultUrlsCount,
@@ -83,7 +83,7 @@ func TestHandle(t *testing.T) {
 		},
 		{
 			name: "repo error",
-			ip:   defaultIpAddress,
+			ip:   defaultIPAddress,
 			repo: &repositoryMock{
 				err: defaultRepoError,
 			},
@@ -99,7 +99,7 @@ func TestHandle(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
-			request.Header.Set(iputil.IpHeader, tc.ip)
+			request.Header.Set(iputil.IPHeader, tc.ip)
 
 			h := NewHandler(tc.repo, defaultTrustedSubnet).Handle
 

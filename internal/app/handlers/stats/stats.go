@@ -23,7 +23,7 @@ func NewHandler(repo repository, trustedSubnet string) *Handler {
 }
 
 func (h *Handler) Handle(c echo.Context) error {
-	isTrusted, err := iputil.IsTrusted(iputil.IpFromRequest(c.Request()), h.trustedSubnet)
+	isTrusted, err := iputil.IsTrusted(iputil.IPFromRequest(c.Request()), h.trustedSubnet)
 	if err != nil {
 		c.Response().WriteHeader(http.StatusInternalServerError)
 		return err
