@@ -116,9 +116,9 @@ func (a *App) Run() error {
 			}
 		}
 		return fmt.Errorf("app err: %w", http.ListenAndServeTLS(a.conf.Addr, tls.CertFilePath, tls.KeyFilePath, a.router))
-	} else {
-		return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 	}
+
+	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 }
 
 // RunWorkers missing godoc.
