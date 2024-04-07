@@ -13,6 +13,7 @@ var ErrNotFound = errors.New("not found")
 // ErrAlreadyExists missing godoc.
 var ErrAlreadyExists = errors.New("already exists")
 
+// StatsOutDTO missing godoc.
 type StatsOutDTO struct {
 	UrlsCount  int
 	UsersCount int

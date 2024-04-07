@@ -10,6 +10,7 @@ const (
 	IPHeader = "X-Real-IP"
 )
 
+// IsTrusted missing godoc.
 func IsTrusted(ip string, trustedSubnet string) (bool, error) {
 	if trustedSubnet == "" {
 		return false, nil
@@ -28,6 +29,7 @@ func IsTrusted(ip string, trustedSubnet string) (bool, error) {
 	return ipNet.Contains(parsedIP), nil
 }
 
+// IPFromRequest missing godoc.
 func IPFromRequest(request *http.Request) string {
 	return request.Header.Get(IPHeader)
 }

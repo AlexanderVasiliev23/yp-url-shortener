@@ -13,15 +13,18 @@ type repository interface {
 	Stats(ctx context.Context) (*storage.StatsOutDTO, error)
 }
 
+// Handler missing godoc.
 type Handler struct {
 	repo          repository
 	trustedSubnet string
 }
 
+// NewHandler missing godoc.
 func NewHandler(repo repository, trustedSubnet string) *Handler {
 	return &Handler{repo: repo, trustedSubnet: trustedSubnet}
 }
 
+// Handle missing godoc.
 func (h *Handler) Handle(c echo.Context) error {
 	isTrusted, err := iputil.IsTrusted(iputil.IPFromRequest(c.Request()), h.trustedSubnet)
 	if err != nil {
