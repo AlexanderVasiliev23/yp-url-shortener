@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	defaultRepoError = errors.New("repo error")
+	errRepo = errors.New("repo error")
 )
 
 type repositoryMock struct {
@@ -85,10 +85,10 @@ func TestHandle(t *testing.T) {
 			name: "repo error",
 			ip:   defaultIPAddress,
 			repo: &repositoryMock{
-				err: defaultRepoError,
+				err: errRepo,
 			},
 			want: want{
-				err:  defaultRepoError,
+				err:  errRepo,
 				body: "",
 				code: http.StatusInternalServerError,
 			},
