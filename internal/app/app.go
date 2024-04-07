@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/tls"
 	"net/http"
 	"os"
 
@@ -107,6 +108,15 @@ func (a *App) buildStorage(ctx context.Context) (storage.Storage, error) {
 // Run missing godoc.
 func (a *App) Run() error {
 	logger.Log.Infof("Server is running on %s", a.conf.Addr)
+
+	if a.conf.EnableHTTPS {
+		if !tls.PemFilesExist() {
+			if err := tls.CreatePemFiles(); err != nil {
+				return fmt.Errorf("generate pem files: %w", err)
+			}
+		}
+		return fmt.Errorf("app err: %w", http.ListenAndServeTLS(a.conf.Addr, tls.CertFilePath, tls.KeyFilePath, a.router))
+	}
 
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 }
