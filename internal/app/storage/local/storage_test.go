@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"testing"
 
 	"github.com/google/uuid"
@@ -71,4 +72,31 @@ func TestFindByUserID(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, []*models.ShortLink{shortLink}, actual)
+}
+
+func TestStats(t *testing.T) {
+	s := New(google.UUIDGenerator{})
+
+	shortLink1 := models.NewShortLink(testUserID, uuid.New(), testToken+"1", testURL+"1")
+	shortLink2 := models.NewShortLink(testUserID, uuid.New(), testToken+"2", testURL+"2")
+	shortLink3 := models.NewShortLink(testUserID+1, uuid.New(), testToken+"3", testURL+"3")
+
+	err := s.Add(context.Background(), shortLink1)
+	require.NoError(t, err)
+
+	err = s.Add(context.Background(), shortLink2)
+	require.NoError(t, err)
+
+	err = s.Add(context.Background(), shortLink3)
+	require.NoError(t, err)
+
+	stats, err := s.Stats(context.Background())
+	require.NoError(t, err)
+
+	expected := storage.StatsOutDTO{
+		UrlsCount:  3,
+		UsersCount: 2,
+	}
+
+	require.Equal(t, expected, *stats)
 }

@@ -137,3 +137,11 @@ func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, toke
 
 	return result, nil
 }
+
+// Stats missing godoc.
+func (s *Storage) Stats(ctx context.Context) (*storage.StatsOutDTO, error) {
+	return &storage.StatsOutDTO{
+		UrlsCount:  len(s.urlToShortLinkMap),
+		UsersCount: len(s.userIDToShortLinkMap),
+	}, nil
+}
