@@ -4,18 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"strings"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
-
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -51,17 +45,16 @@ func (m mockRepo) GetTokenByURL(ctx context.Context, url string) (string, error)
 
 func TestAdd(t *testing.T) {
 	type want struct {
-		body string
-		code int
+		shortURL string
+		err      error
 	}
 
-	tests := []struct {
+	testCases := []struct {
 		name               string
 		repo               mockRepo
 		tokGen             mockTokenGenerator
 		userContextFetcher userContextFetcher
-		method             string
-		body               string
+		originalURL        string
 		want               want
 	}{
 		{
@@ -69,23 +62,21 @@ func TestAdd(t *testing.T) {
 			repo:               mockRepo{},
 			tokGen:             mockTokenGenerator{token: defaultToken},
 			userContextFetcher: &mock.UserContextFetcherMock{},
-			method:             http.MethodPost,
-			body:               "test_url",
+			originalURL:        "test_url",
 			want: want{
-				code: http.StatusCreated,
-				body: fmt.Sprintf("%s/%s", addr, defaultToken),
+				err:      nil,
+				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
 		},
 		{
-			name:               "empty body",
+			name:               "empty originalURL",
 			repo:               mockRepo{},
 			tokGen:             mockTokenGenerator{},
 			userContextFetcher: &mock.UserContextFetcherMock{},
-			method:             http.MethodPost,
-			body:               "",
+			originalURL:        "",
 			want: want{
-				code: http.StatusBadRequest,
-				body: "",
+				err:      ErrOriginalURLIsEmpty,
+				shortURL: "",
 			},
 		},
 		{
@@ -93,11 +84,10 @@ func TestAdd(t *testing.T) {
 			repo:               mockRepo{addingErr: errDefault},
 			tokGen:             mockTokenGenerator{},
 			userContextFetcher: &mock.UserContextFetcherMock{},
-			method:             http.MethodPost,
-			body:               "test_url",
+			originalURL:        "test_url",
 			want: want{
-				code: http.StatusInternalServerError,
-				body: "",
+				err:      errDefault,
+				shortURL: "",
 			},
 		},
 		{
@@ -105,11 +95,10 @@ func TestAdd(t *testing.T) {
 			repo:               mockRepo{addingErr: storage.ErrAlreadyExists, getTokenErr: errDefault},
 			tokGen:             mockTokenGenerator{},
 			userContextFetcher: &mock.UserContextFetcherMock{},
-			method:             http.MethodPost,
-			body:               "test_url",
+			originalURL:        "test_url",
 			want: want{
-				code: http.StatusInternalServerError,
-				body: "",
+				err:      errDefault,
+				shortURL: "",
 			},
 		},
 		{
@@ -117,11 +106,10 @@ func TestAdd(t *testing.T) {
 			repo:               mockRepo{},
 			tokGen:             mockTokenGenerator{err: errDefault},
 			userContextFetcher: &mock.UserContextFetcherMock{},
-			method:             http.MethodPost,
-			body:               "test_url",
+			originalURL:        "test_url",
 			want: want{
-				code: http.StatusInternalServerError,
-				body: "",
+				err:      errDefault,
+				shortURL: "",
 			},
 		},
 		{
@@ -129,11 +117,10 @@ func TestAdd(t *testing.T) {
 			repo:               mockRepo{addingErr: storage.ErrAlreadyExists},
 			tokGen:             mockTokenGenerator{},
 			userContextFetcher: &mock.UserContextFetcherMock{},
-			method:             http.MethodPost,
-			body:               "test_url",
+			originalURL:        "test_url",
 			want: want{
-				code: http.StatusConflict,
-				body: fmt.Sprintf("%s/%s", addr, defaultToken),
+				err:      ErrOriginURLAlreadyExists,
+				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
 		},
 		{
@@ -141,31 +128,26 @@ func TestAdd(t *testing.T) {
 			repo:               mockRepo{},
 			tokGen:             mockTokenGenerator{},
 			userContextFetcher: &mock.UserContextFetcherMock{Err: errDefault},
-			method:             http.MethodPost,
-			body:               "test_url",
+			originalURL:        "test_url",
 			want: want{
-				code: http.StatusInternalServerError,
+				err:      errDefault,
+				shortURL: "",
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(tt.repo, tt.tokGen, tt.userContextFetcher, addr).Add
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			useCase := NewUseCase(tc.repo, tc.tokGen, tc.userContextFetcher, addr)
 
-			r := httptest.NewRequest(tt.method, "/", strings.NewReader(tt.body))
-			w := httptest.NewRecorder()
+			shortURL, err := useCase.Add(context.Background(), tc.originalURL)
 
-			e := echo.New()
-			c := e.NewContext(r, w)
-
-			err := handler(c)
-
-			if tt.want.code == http.StatusCreated {
-				require.NoError(t, err)
+			if tc.want.err != nil {
+				assert.Equal(t, tc.want.err.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.want.code, w.Code)
-			assert.Equal(t, tt.want.body, w.Body.String())
+			assert.Equal(t, tc.want.shortURL, shortURL)
 		})
 	}
 }
