@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "proto/url_shortener";
+
+service UrlShortener {
+  rpc Add(AddRequest) returns (AddResponse);
+  rpc CreateBatch(CreateBatchRequest) returns (CreateBatchResponse);
+  rpc CreateSingle(CreateSingleRequest) returns (CreateSingleResponse);
+}
+
+message AddRequest {
+  string originalURL = 1;
+}
+
+message AddResponse {
+  string shortURL = 1;
+  string error = 2;
+}
+
+message CreateBatchRequest {
+  message Item {
+      string correlationID = 1;
+      string originalURL = 2;
+  }
+
+  repeated Item items = 1;
+}
+
+message CreateBatchResponse {
+  message Item {
+    string correlationID = 1;
+    string shortURL = 2;
+  }
+
+  repeated Item items = 1;
+}
+
+message CreateSingleRequest {
+  string originalURL = 1;
+}
+
+message CreateSingleResponse {
+  string shortURL = 1;
+  string error = 2;
+}

@@ -227,6 +227,22 @@ func (s *Storage) FilterOnlyThisUserTokens(ctx context.Context, userID int, toke
 	return res, nil
 }
 
+// Stats missing godoc.
+func (s *Storage) Stats(ctx context.Context) (*storage.StatsOutDTO, error) {
+	q := `
+		select count(*), count(distinct user_id)
+		from short_links;
+	`
+
+	out := &storage.StatsOutDTO{}
+
+	if err := s.dbConn.QueryRow(ctx, q).Scan(&out.UrlsCount, &out.UsersCount); err != nil {
+		return nil, fmt.Errorf("scan stats: %w", err)
+	}
+
+	return out, nil
+}
+
 func (s *Storage) save(ctx context.Context, shortLink *models.ShortLink) error {
 	q := `insert into short_links (id, token, original, user_id) values ($1,$2,$3,$4)`
 
