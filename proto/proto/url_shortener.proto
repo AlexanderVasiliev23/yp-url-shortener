@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "proto/url_shortener";
+
+service UrlShortener {
+  rpc Add(AddRequest) returns (AddResponse);
+}
+
+message AddRequest {
+  string originalURL = 1;
+}
+
+message AddResponse {
+  string shortURL = 1;
+  optional string error = 2;
+}

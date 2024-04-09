@@ -20,6 +20,7 @@ const (
 // Config missing godoc.
 type Config struct {
 	Addr                  string
+	GRPCServerAddr        string
 	BaseAddress           string
 	StorageFilePath       string
 	DatabaseDSN           string
@@ -40,6 +41,11 @@ type DeleteWorkerConfig struct {
 // MustConfigure missing godoc.
 func MustConfigure() *Config {
 	conf := &Config{}
+
+	// todo config env
+	// todo config file
+	// todo config flag
+	conf.GRPCServerAddr = "localhost:8001"
 
 	flag.StringVar(&conf.Addr, "a", ":8080", "server address")
 	flag.StringVar(&conf.BaseAddress, "b", "http://localhost:8080", "base address for short url")

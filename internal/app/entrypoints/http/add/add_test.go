@@ -40,11 +40,11 @@ func TestAdd(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		method string
-		body   string
-		want   want
-		useCase
+		name    string
+		method  string
+		body    string
+		want    want
+		useCase useCase
 	}{
 		{
 			name:   "success",

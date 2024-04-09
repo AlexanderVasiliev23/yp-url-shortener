@@ -4,13 +4,13 @@ import (
 	"context"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/add"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/get"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/middlewares/gzip"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/ping"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/shorten"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/shorten/batch"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/stats"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/user/urls/deleteurl"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/user/urls/list"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
 	add2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/add"
 	get2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/get"
 	batch2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/batch"
@@ -21,8 +21,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/jwt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/middlewares/jwt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/middlewares/logger"
 )
 
 func (a *App) configureRouter(ctx context.Context) *echo.Echo {
