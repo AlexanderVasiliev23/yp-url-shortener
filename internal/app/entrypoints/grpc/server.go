@@ -80,19 +80,6 @@ func (s *Server) CreateBatch(ctx context.Context, req *url_shortener.CreateBatch
 		return nil, status.Errorf(codes.Internal, "unable to shorten: %v", err)
 	}
 
-	type respItem struct {
-		CorrelationID string `json:"correlation_id"`
-		ShortURL      string `json:"short_url"`
-	}
-
-	response := make([]respItem, 0, len(outDTO.Items))
-	for _, item := range outDTO.Items {
-		response = append(response, respItem{
-			CorrelationID: item.CorrelationID,
-			ShortURL:      item.ShortURL,
-		})
-	}
-
 	resp := &url_shortener.CreateBatchResponse{
 		Items: make([]*url_shortener.CreateBatchResponse_Item, 0, len(outDTO.Items)),
 	}
