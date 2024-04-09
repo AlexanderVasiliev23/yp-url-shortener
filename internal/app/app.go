@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc/add"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc/interceptors/jwt"
-	logger2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc/interceptors/logger"
+	loggerinterceptor "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc/interceptors/logger"
 	add2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/add"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/tls"
-	url_shortener "github.com/AlexanderVasiliev23/yp-url-shortener/proto/gen/proto"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	urlshortener "github.com/AlexanderVasiliev23/yp-url-shortener/proto/gen/proto"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
@@ -129,19 +128,12 @@ func (a *App) RunHTTPServer() error {
 	return fmt.Errorf("app err: %w", http.ListenAndServe(a.conf.Addr, a.router))
 }
 
-type L struct {
-}
-
-func (l *L) Log(ctx context.Context, level logging.Level, msg string, fields ...any) {
-	logger.Log.Infof(msg, fields...)
-}
-
 func (a *App) RunGRPCServer() error {
 	logger.Log.Infof("GRPC Server is running on %s", a.conf.GRPCServerAddr)
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			logger2.UnaryInterceptor,
+			loggerinterceptor.UnaryInterceptor,
 			jwt.UnaryInterceptor(a.conf.JWTSecretKey),
 		),
 	)
@@ -149,7 +141,7 @@ func (a *App) RunGRPCServer() error {
 	addUseCase := add2.NewUseCase(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
 	addServer := add.NewServer(addUseCase)
 
-	url_shortener.RegisterUrlShortenerServer(s, addServer)
+	urlshortener.RegisterUrlShortenerServer(s, addServer)
 
 	lis, err := net.Listen("tcp", a.conf.GRPCServerAddr)
 	if err != nil {
