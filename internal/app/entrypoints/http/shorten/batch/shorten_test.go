@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/batch"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,10 +12,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
 )
 
 const (
@@ -29,24 +26,13 @@ var (
 	errDefault = errors.New("default_err")
 )
 
-type batchSaverMock struct {
+type useCaseMock struct {
+	out *batch.OutDTO
 	err error
 }
 
-func (m batchSaverMock) SaveBatch(ctx context.Context, shortLinks []*models.ShortLink) error {
-	return m.err
-}
-
-type tokenGeneratorMock struct {
-	tokensSeq chan string
-	err       error
-}
-
-func (t tokenGeneratorMock) Generate() (string, error) {
-	if t.err != nil {
-		return "", t.err
-	}
-	return <-t.tokensSeq, nil
+func (m *useCaseMock) Shorten(ctx context.Context, in batch.InDTO) (*batch.OutDTO, error) {
+	return m.out, m.err
 }
 
 func TestShorten(t *testing.T) {
@@ -57,65 +43,41 @@ func TestShorten(t *testing.T) {
 	}
 
 	testCases := []struct {
-		userContextFetcher userContextFetcher
-		tokenGenerator     tokenGenerator
-		batchSaver         batchSaverMock
-		name               string
-		reqBody            string
-		want               want
+		useCase useCase
+		name    string
+		reqBody string
+		want    want
 	}{
 		{
-			name:               "success",
-			userContextFetcher: &mock.UserContextFetcherMock{},
-			tokenGenerator: func() tokenGenerator {
-				tokens := []string{token1, token2}
-				tokensChan := make(chan string, len(tokens))
-				for _, token := range tokens {
-					tokensChan <- token
-				}
-				return tokenGeneratorMock{tokensSeq: tokensChan}
-			}(),
-			batchSaver: batchSaverMock{},
-			reqBody:    fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationID1, correlationID2),
+			name: "success",
+			useCase: &useCaseMock{
+				out: &batch.OutDTO{
+					Items: []batch.OutDTOItem{
+						{
+							CorrelationID: correlationID1,
+							ShortURL:      fmt.Sprintf("%s/%s", addr, token1),
+						},
+						{
+							CorrelationID: correlationID2,
+							ShortURL:      fmt.Sprintf("%s/%s", addr, token2),
+						},
+					},
+				},
+				err: nil,
+			},
+			reqBody: fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationID1, correlationID2),
 			want: want{
 				code: http.StatusCreated,
 				body: fmt.Sprintf(`[{"correlation_id":"%s","short_url":"%s/%s"},{"correlation_id":"%s","short_url":"%s/%s"}]`+"\n", correlationID1, addr, token1, correlationID2, addr, token2),
 			},
 		},
 		{
-			name:               "user fetching error",
-			userContextFetcher: &mock.UserContextFetcherMock{Err: errDefault},
-			batchSaver:         batchSaverMock{},
-			reqBody:            fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationID1, correlationID2),
-			want: want{
-				code: http.StatusInternalServerError,
-				err:  errDefault,
+			name: "user fetching error",
+			useCase: &useCaseMock{
+				err: errDefault,
+				out: nil,
 			},
-		},
-		{
-			name:               "token generator error",
-			userContextFetcher: &mock.UserContextFetcherMock{},
-			tokenGenerator:     tokenGeneratorMock{err: errDefault},
-			batchSaver:         batchSaverMock{},
-			reqBody:            fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationID1, correlationID2),
-			want: want{
-				code: http.StatusInternalServerError,
-				err:  errDefault,
-			},
-		},
-		{
-			name:               "batch saver error",
-			userContextFetcher: &mock.UserContextFetcherMock{},
-			tokenGenerator: func() tokenGenerator {
-				tokens := []string{token1, token2}
-				tokensChan := make(chan string, len(tokens))
-				for _, token := range tokens {
-					tokensChan <- token
-				}
-				return tokenGeneratorMock{tokensSeq: tokensChan}
-			}(),
-			batchSaver: batchSaverMock{err: errDefault},
-			reqBody:    fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationID1, correlationID2),
+			reqBody: fmt.Sprintf(`[{"correlation_id": "%s","original_url": "https://test_url.com"},{"correlation_id": "%s","original_url": "https://test_url.com"}]`, correlationID1, correlationID2),
 			want: want{
 				code: http.StatusInternalServerError,
 				err:  errDefault,
@@ -128,7 +90,7 @@ func TestShorten(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tc.reqBody))
 			resp := httptest.NewRecorder()
 
-			h := NewShortener(tc.batchSaver, tc.tokenGenerator, google.UUIDGenerator{}, tc.userContextFetcher, addr).Handle
+			h := NewShortener(tc.useCase).Handle
 
 			e := echo.New()
 			c := e.NewContext(req, resp)

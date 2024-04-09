@@ -3,58 +3,45 @@ package list
 import (
 	"context"
 	"encoding/json"
-	"net/http"
-
+	"errors"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/user/url/list"
 	"github.com/labstack/echo/v4"
-
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"net/http"
 )
 
-type linksStorage interface {
-	FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error)
-}
-
-type userContextFetcher interface {
-	GetUserIDFromContext(ctx context.Context) (int, error)
+type useCase interface {
+	List(ctx context.Context) (*list.OutDTO, error)
 }
 
 // Handler missing godoc.
 type Handler struct {
-	storage            linksStorage
-	userContextFetcher userContextFetcher
-	addr               string
+	useCase useCase
 }
 
 // NewHandler missing godoc.
-func NewHandler(
-	storage linksStorage,
-	userContextFetcher userContextFetcher,
-	addr string,
-) *Handler {
+func NewHandler(useCase useCase) *Handler {
 	return &Handler{
-		storage:            storage,
-		userContextFetcher: userContextFetcher,
-		addr:               addr,
+		useCase: useCase,
 	}
 }
 
 // List missing godoc.
 func (h *Handler) List(c echo.Context) error {
-	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
-	if err != nil {
-		c.Response().WriteHeader(http.StatusUnauthorized)
-		return err
-	}
+	outDTO, err := h.useCase.List(c.Request().Context())
 
-	shortLinks, err := h.storage.FindByUserID(c.Request().Context(), userID)
 	if err != nil {
+		if errors.Is(err, list.ErrUnauthorized) {
+			c.Response().WriteHeader(http.StatusUnauthorized)
+			return err
+		}
+
+		if errors.Is(err, list.ErrNoSavedURLs) {
+			c.Response().WriteHeader(http.StatusNoContent)
+			return nil
+		}
+
 		c.Response().WriteHeader(http.StatusInternalServerError)
 		return err
-	}
-
-	if len(shortLinks) == 0 {
-		c.Response().WriteHeader(http.StatusNoContent)
-		return nil
 	}
 
 	type respItem struct {
@@ -64,12 +51,12 @@ func (h *Handler) List(c echo.Context) error {
 
 	type resp []respItem
 
-	response := make(resp, 0, len(shortLinks))
+	response := make(resp, 0, len(outDTO.Items))
 
-	for _, shortLink := range shortLinks {
+	for _, outDTOItem := range outDTO.Items {
 		response = append(response, respItem{
-			ShortURL:    h.addr + "/" + shortLink.Token,
-			OriginalURL: shortLink.Original,
+			ShortURL:    outDTOItem.ShortURL,
+			OriginalURL: outDTOItem.OriginalURL,
 		})
 	}
 

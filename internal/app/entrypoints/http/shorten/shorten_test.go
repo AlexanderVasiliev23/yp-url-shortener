@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/single"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,8 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
 )
 
 const (
@@ -24,10 +23,17 @@ const (
 )
 
 var (
-	ErrRepositorySaving = errors.New("repository saving error")
-	ErrTokenGen         = errors.New("token gen err")
-	errDefault          = errors.New("default error")
+	errDefault = errors.New("default error")
 )
+
+type useCaseMock struct {
+	shortURL string
+	err      error
+}
+
+func (m *useCaseMock) Shorten(ctx context.Context, jsonString string) (shortURL string, err error) {
+	return m.shortURL, m.err
+}
 
 type tokenGeneratorMock struct {
 	err   error
@@ -64,12 +70,10 @@ func TestShorten(t *testing.T) {
 	}
 
 	testCases := []struct {
-		tokenGenerator     tokenGenerator
-		repository         repository
-		userContextFetcher userContextFetcher
-		request            request
-		name               string
-		want               want
+		useCase useCase
+		request request
+		name    string
+		want    want
 	}{
 		{
 			name: "success",
@@ -81,9 +85,10 @@ func TestShorten(t *testing.T) {
 				code: http.StatusCreated,
 				body: fmt.Sprintf("{\"result\":\"%s/%s\"}\n", addr, defaultToken),
 			},
-			tokenGenerator:     tokenGeneratorMock{token: defaultToken},
-			repository:         repositoryMock{},
-			userContextFetcher: &mock.UserContextFetcherMock{},
+			useCase: &useCaseMock{
+				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
+				err:      nil,
+			},
 		},
 		{
 			name: "empty url",
@@ -94,9 +99,12 @@ func TestShorten(t *testing.T) {
 			want: want{
 				code: http.StatusBadRequest,
 				body: "",
-				err:  ErrURLIsEmpty,
+				err:  single.ErrEmptyOriginalURL,
 			},
-			userContextFetcher: &mock.UserContextFetcherMock{},
+			useCase: &useCaseMock{
+				shortURL: "",
+				err:      single.ErrEmptyOriginalURL,
+			},
 		},
 		{
 			name: "wrong request body",
@@ -107,41 +115,15 @@ func TestShorten(t *testing.T) {
 			want: want{
 				code: http.StatusBadRequest,
 				body: "",
-				err:  ErrURLIsEmpty,
+				err:  single.ErrEmptyOriginalURL,
 			},
-			userContextFetcher: &mock.UserContextFetcherMock{},
+			useCase: &useCaseMock{
+				shortURL: "",
+				err:      single.ErrEmptyOriginalURL,
+			},
 		},
 		{
-			name: "token generating error",
-			request: request{
-				method: http.MethodPost,
-				body:   `{"url": "https://practicum.yandex.ru/"}`,
-			},
-			want: want{
-				code: http.StatusInternalServerError,
-				body: "",
-				err:  ErrTokenGen,
-			},
-			tokenGenerator:     tokenGeneratorMock{err: ErrTokenGen},
-			userContextFetcher: &mock.UserContextFetcherMock{},
-		},
-		{
-			name: "repository saving error",
-			request: request{
-				method: http.MethodPost,
-				body:   `{"url": "https://practicum.yandex.ru/"}`,
-			},
-			want: want{
-				code: http.StatusInternalServerError,
-				body: "",
-				err:  ErrRepositorySaving,
-			},
-			tokenGenerator:     tokenGeneratorMock{},
-			repository:         repositoryMock{addingErr: ErrRepositorySaving},
-			userContextFetcher: &mock.UserContextFetcherMock{},
-		},
-		{
-			name: "repository getting error",
+			name: "usecase unknown error",
 			request: request{
 				method: http.MethodPost,
 				body:   `{"url": "https://practicum.yandex.ru/"}`,
@@ -151,9 +133,10 @@ func TestShorten(t *testing.T) {
 				body: "",
 				err:  errDefault,
 			},
-			tokenGenerator:     tokenGeneratorMock{},
-			repository:         repositoryMock{addingErr: storage.ErrAlreadyExists, gettingErr: errDefault},
-			userContextFetcher: &mock.UserContextFetcherMock{},
+			useCase: &useCaseMock{
+				shortURL: "",
+				err:      errDefault,
+			},
 		},
 		{
 			name: "already exists",
@@ -164,25 +147,12 @@ func TestShorten(t *testing.T) {
 			want: want{
 				code: http.StatusConflict,
 				body: fmt.Sprintf("{\"result\":\"%s/%s\"}\n", addr, defaultToken),
+				err:  single.ErrAlreadyExists,
 			},
-			tokenGenerator:     tokenGeneratorMock{},
-			repository:         repositoryMock{addingErr: storage.ErrAlreadyExists},
-			userContextFetcher: &mock.UserContextFetcherMock{},
-		},
-		{
-			name: "user fetcher error",
-			request: request{
-				method: http.MethodPost,
-				body:   `{"url": "https://practicum.yandex.ru/"}`,
+			useCase: &useCaseMock{
+				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
+				err:      single.ErrAlreadyExists,
 			},
-			want: want{
-				code: http.StatusInternalServerError,
-				body: "",
-				err:  errDefault,
-			},
-			tokenGenerator:     tokenGeneratorMock{},
-			repository:         repositoryMock{},
-			userContextFetcher: &mock.UserContextFetcherMock{Err: errDefault},
 		},
 	}
 
@@ -191,7 +161,7 @@ func TestShorten(t *testing.T) {
 			r := httptest.NewRequest(tc.request.method, path, strings.NewReader(tc.request.body))
 			w := httptest.NewRecorder()
 
-			h := NewShortener(tc.repository, tc.tokenGenerator, tc.userContextFetcher, addr).Handle
+			h := NewShortener(tc.useCase).Handle
 
 			e := echo.New()
 			c := e.NewContext(r, w)

@@ -3,6 +3,7 @@ package deleteurl
 import (
 	"context"
 	"errors"
+	deleteusecase "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/user/url/delete"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 )
 
@@ -20,38 +20,33 @@ var (
 	errDefault = errors.New("default error")
 )
 
-type storageMock struct {
-	err    error
-	result []string
+type useCaseMock struct {
+	err error
 }
 
-func (m storageMock) FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error) {
-	return m.result, m.err
+func (u *useCaseMock) Delete(ctx context.Context, tokens []string) error {
+	return u.err
 }
 
 func TestDelete(t *testing.T) {
 	type want struct {
-		err   error
-		tasks []deleter.DeleteTask
-		code  int
+		err  error
+		code int
 	}
 
 	testCases := []struct {
-		linksStorage       storageMock
-		userContextFetcher userContextFetcher
-		name               string
-		body               string
-		want               want
+		useCase useCase
+		name    string
+		body    string
+		want    want
 	}{
 		{
 			name: "success",
 			body: `["token1", "token2"]`,
 			want: want{
-				code:  http.StatusAccepted,
-				tasks: []deleter.DeleteTask{{Tokens: []string{"token1", "token2"}}},
+				code: http.StatusAccepted,
 			},
-			userContextFetcher: &mock.UserContextFetcherMock{},
-			linksStorage:       storageMock{result: []string{"token1", "token2"}},
+			useCase: &useCaseMock{err: nil},
 		},
 		{
 			name: "bad request",
@@ -60,28 +55,24 @@ func TestDelete(t *testing.T) {
 				code: http.StatusBadRequest,
 				err:  io.EOF,
 			},
-			userContextFetcher: &mock.UserContextFetcherMock{},
-			linksStorage:       storageMock{},
 		},
 		{
-			name: "user fetcher error",
-			body: `["token1", "token2"]`,
-			want: want{
-				code: http.StatusUnauthorized,
-				err:  errDefault,
-			},
-			userContextFetcher: &mock.UserContextFetcherMock{Err: errDefault},
-			linksStorage:       storageMock{},
-		},
-		{
-			name: "repo error",
+			name: "usecase unknown error",
 			body: `["token1", "token2"]`,
 			want: want{
 				code: http.StatusInternalServerError,
 				err:  errDefault,
 			},
-			userContextFetcher: &mock.UserContextFetcherMock{},
-			linksStorage:       storageMock{err: errDefault},
+			useCase: &useCaseMock{err: errDefault},
+		},
+		{
+			name: "unauthorized",
+			body: `["token1", "token2"]`,
+			want: want{
+				code: http.StatusUnauthorized,
+				err:  deleteusecase.ErrUnauthorized,
+			},
+			useCase: &useCaseMock{err: deleteusecase.ErrUnauthorized},
 		},
 	}
 
@@ -90,23 +81,19 @@ func TestDelete(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", strings.NewReader(tc.body))
 
-			ch := make(chan deleter.DeleteTask, 1)
-
-			h := NewHandler(tc.linksStorage, tc.userContextFetcher, ch).Delete
+			h := NewHandler(tc.useCase).Delete
 
 			e := echo.New()
 			c := e.NewContext(req, recorder)
 
 			err := h(c)
-			close(ch)
 
-			assert.ErrorIs(t, err, tc.want.err)
-			assert.Equal(t, tc.want.code, recorder.Code)
-
-			if len(tc.want.tasks) > 0 {
-				chanAsSlice := chanToSlice(ch)
-				assert.Equal(t, tc.want.tasks, chanAsSlice)
+			if tc.want.err != nil {
+				assert.Equal(t, tc.want.err.Error(), err.Error())
+			} else {
+				assert.Nil(t, err)
 			}
+			assert.Equal(t, tc.want.code, recorder.Code)
 		})
 	}
 }

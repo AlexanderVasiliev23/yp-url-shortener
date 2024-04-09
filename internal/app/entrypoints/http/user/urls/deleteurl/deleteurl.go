@@ -3,63 +3,47 @@ package deleteurl
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	deleteusecase "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/user/url/delete"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/workers/deleter"
 )
 
-type linksStorage interface {
-	FilterOnlyThisUserTokens(ctx context.Context, userID int, tokens []string) ([]string, error)
-}
-
-type userContextFetcher interface {
-	GetUserIDFromContext(ctx context.Context) (int, error)
+type useCase interface {
+	Delete(ctx context.Context, tokens []string) error
 }
 
 // Handler missing godoc.
 type Handler struct {
-	linksStorage       linksStorage
-	userContextFetcher userContextFetcher
-	deleteByTokenCh    chan<- deleter.DeleteTask
+	useCase useCase
 }
 
 // NewHandler missing godoc.
-func NewHandler(
-	linksStorage linksStorage,
-	userContextFetcher userContextFetcher,
-	deleteByTokenCh chan<- deleter.DeleteTask,
-) *Handler {
+func NewHandler(useCase useCase) *Handler {
 	return &Handler{
-		linksStorage:       linksStorage,
-		userContextFetcher: userContextFetcher,
-		deleteByTokenCh:    deleteByTokenCh,
+		useCase: useCase,
 	}
 }
 
 // Delete missing godoc.
 func (h *Handler) Delete(c echo.Context) error {
-	userID, err := h.userContextFetcher.GetUserIDFromContext(c.Request().Context())
-	if err != nil {
-		c.Response().WriteHeader(http.StatusUnauthorized)
-		return err
-	}
-
-	var reqBody []string
-	if _err := json.NewDecoder(c.Request().Body).Decode(&reqBody); _err != nil {
+	var tokens []string
+	if _err := json.NewDecoder(c.Request().Body).Decode(&tokens); _err != nil {
 		c.Response().WriteHeader(http.StatusBadRequest)
 		return _err
 	}
 
-	tokens, err := h.linksStorage.FilterOnlyThisUserTokens(c.Request().Context(), userID, reqBody)
+	err := h.useCase.Delete(c.Request().Context(), tokens)
+
 	if err != nil {
+		if errors.Is(err, deleteusecase.ErrUnauthorized) {
+			c.Response().WriteHeader(http.StatusUnauthorized)
+			return err
+		}
+
 		c.Response().WriteHeader(http.StatusInternalServerError)
 		return err
-	}
-
-	h.deleteByTokenCh <- deleter.DeleteTask{
-		Tokens: tokens,
 	}
 
 	c.Response().WriteHeader(http.StatusAccepted)

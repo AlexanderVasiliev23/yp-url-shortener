@@ -2,18 +2,25 @@ package app
 
 import (
 	"context"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/stats"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/add"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/get"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/ping"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/shorten"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/shorten/batch"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/stats"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/user/urls/deleteurl"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/http/user/urls/list"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/gzip"
+	add2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/add"
+	get2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/get"
+	batch2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/batch"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/single"
+	stats2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/stats"
+	delete2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/user/url/delete"
+	list2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/user/url/list"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/add"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/get"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/ping"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/shorten/batch"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/deleteurl"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/handlers/user/urls/list"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/jwt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/middlewares/logger"
 )
@@ -31,14 +38,22 @@ func (a *App) configureRouter(ctx context.Context) *echo.Echo {
 		jwt.Middleware(ctx, a.conf.JWTSecretKey),
 	)
 
-	addHandler := add.NewHandler(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
-	getHandler := get.NewHandler(a.storage)
-	shortener := shorten.NewShortener(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
-	batchShortener := batch.NewShortener(a.storage, a.tokenGenerator, a.uuidGenerator, a.userContextFetcher, a.conf.BaseAddress)
+	addUseCase := add2.NewUseCase(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
+	getUseCase := get2.NewUseCase(a.storage)
+	singleUseCase := single.NewUseCase(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
+	batchUseCase := batch2.NewUseCase(a.storage, a.tokenGenerator, a.uuidGenerator, a.userContextFetcher, a.conf.BaseAddress)
+	listUseCase := list2.NewUseCase(a.storage, a.userContextFetcher, a.conf.BaseAddress)
+	deleteUseCase := delete2.NewUseCase(a.storage, a.userContextFetcher, a.deleteByTokenCh)
+	statsUseCase := stats2.NewUseCase(a.storage, a.conf.TrustedSubnet)
+
+	addHandler := add.NewHandler(addUseCase)
+	getHandler := get.NewHandler(getUseCase)
+	shortener := shorten.NewShortener(singleUseCase)
+	batchShortener := batch.NewShortener(batchUseCase)
 	pingHandler := ping.NewHandler(a.dbConn)
-	listHandler := list.NewHandler(a.storage, a.userContextFetcher, a.conf.BaseAddress)
-	deleteHandler := deleteurl.NewHandler(a.storage, a.userContextFetcher, a.deleteByTokenCh)
-	statsHandler := stats.NewHandler(a.storage, a.conf.TrustedSubnet)
+	listHandler := list.NewHandler(listUseCase)
+	deleteHandler := deleteurl.NewHandler(deleteUseCase)
+	statsHandler := stats.NewHandler(statsUseCase)
 
 	e.GET("/:token", getHandler.Get)
 	e.GET("/ping", pingHandler.Ping)

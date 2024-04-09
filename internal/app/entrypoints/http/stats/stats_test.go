@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/stats"
 	iputil "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/ip"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -14,24 +14,21 @@ import (
 )
 
 const (
-	defaultUrlsCount           = 45
-	defaultUsersCount          = 23
-	defaultTrustedSubnet       = "127.0.0.1/24"
-	defaultIPAddress           = "127.0.0.1"
-	defaultNotTrustedIPAddress = "123.123.123.123"
+	defaultUrlsCount  = 45
+	defaultUsersCount = 23
 )
 
 var (
-	errRepo = errors.New("repo error")
+	errDefault = errors.New("default error")
 )
 
-type repositoryMock struct {
-	statusOutDTO *storage.StatsOutDTO
-	err          error
+type useCaseMock struct {
+	outDTO *stats.OutDTO
+	err    error
 }
 
-func (r *repositoryMock) Stats(ctx context.Context) (*storage.StatsOutDTO, error) {
-	return r.statusOutDTO, r.err
+func (m *useCaseMock) Stats(ctx context.Context, ip string) (*stats.OutDTO, error) {
+	return m.outDTO, m.err
 }
 
 func TestHandle(t *testing.T) {
@@ -42,18 +39,17 @@ func TestHandle(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name string
-		ip   string
-		repo *repositoryMock
-		want want
+		name    string
+		ip      string
+		useCase useCase
+		want    want
 	}{
 		{
 			name: "success",
-			ip:   defaultIPAddress,
-			repo: &repositoryMock{
-				statusOutDTO: &storage.StatsOutDTO{
-					UrlsCount:  defaultUrlsCount,
-					UsersCount: defaultUsersCount,
+			useCase: &useCaseMock{
+				outDTO: &stats.OutDTO{
+					Urls:  defaultUrlsCount,
+					Users: defaultUsersCount,
 				},
 				err: nil,
 			},
@@ -64,17 +60,11 @@ func TestHandle(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid ip address",
-			ip:   "invalid ip address",
-			want: want{
-				err:  fmt.Errorf("invalid ip address: %s", "invalid ip address"),
-				body: "",
-				code: http.StatusInternalServerError,
-			},
-		},
-		{
 			name: "not trusted ip address",
-			ip:   defaultNotTrustedIPAddress,
+			useCase: &useCaseMock{
+				outDTO: nil,
+				err:    stats.ErrNotTrustedIP,
+			},
 			want: want{
 				err:  nil,
 				body: "",
@@ -82,13 +72,13 @@ func TestHandle(t *testing.T) {
 			},
 		},
 		{
-			name: "repo error",
-			ip:   defaultIPAddress,
-			repo: &repositoryMock{
-				err: errRepo,
+			name: "usecase unknown error",
+			useCase: &useCaseMock{
+				outDTO: nil,
+				err:    errDefault,
 			},
 			want: want{
-				err:  errRepo,
+				err:  errDefault,
 				body: "",
 				code: http.StatusInternalServerError,
 			},
@@ -101,7 +91,7 @@ func TestHandle(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
 			request.Header.Set(iputil.IPHeader, tc.ip)
 
-			h := NewHandler(tc.repo, defaultTrustedSubnet).Handle
+			h := NewHandler(tc.useCase).Handle
 
 			e := echo.New()
 			c := e.NewContext(request, recorder)

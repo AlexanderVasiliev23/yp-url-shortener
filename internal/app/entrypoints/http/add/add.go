@@ -12,7 +12,7 @@ import (
 )
 
 type useCase interface {
-	Add(ctx context.Context, originalURL string) (shortenURL string, err error)
+	Add(ctx context.Context, originalURL string) (shortURL string, err error)
 }
 
 // Handler missing godoc.
@@ -36,7 +36,7 @@ func (h *Handler) Add(c echo.Context) error {
 	}
 
 	shortURL, err := h.useCase.Add(c.Request().Context(), string(originalURL))
-	// todo switch
+
 	if err != nil {
 		if errors.Is(err, add.ErrOriginURLAlreadyExists) {
 			c.Response().WriteHeader(http.StatusConflict)

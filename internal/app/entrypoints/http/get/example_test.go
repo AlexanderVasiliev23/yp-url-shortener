@@ -2,8 +2,6 @@ package get
 
 import (
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
@@ -12,9 +10,10 @@ import (
 // Example демонстрация работы обработчика, который на вход принимает токен,
 // а на выходе редиректит на соответствующий url, если для данного токена такой есть
 func Example() {
-	savedURL := "https://github.com"
-
-	handler := NewHandler(mockRepo{url: models.NewShortLink(defaultUserID, uuid.New(), defaultToken, savedURL)}).Get
+	handler := NewHandler(&useCaseMock{
+		originalURL: "https://github.com",
+		err:         nil,
+	}).Get
 
 	r := httptest.NewRequest(http.MethodGet, "/"+defaultToken, nil)
 	w := httptest.NewRecorder()

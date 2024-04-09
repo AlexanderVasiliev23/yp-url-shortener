@@ -3,41 +3,37 @@ package stats
 import (
 	"context"
 	"encoding/json"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/storage"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/ip"
+	"errors"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/stats"
+	iputil "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/ip"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
-type repository interface {
-	Stats(ctx context.Context) (*storage.StatsOutDTO, error)
+type useCase interface {
+	Stats(ctx context.Context, ip string) (*stats.OutDTO, error)
 }
 
 // Handler missing godoc.
 type Handler struct {
-	repo          repository
-	trustedSubnet string
+	useCase useCase
 }
 
 // NewHandler missing godoc.
-func NewHandler(repo repository, trustedSubnet string) *Handler {
-	return &Handler{repo: repo, trustedSubnet: trustedSubnet}
+func NewHandler(useCase useCase) *Handler {
+	return &Handler{useCase: useCase}
 }
 
 // Handle missing godoc.
 func (h *Handler) Handle(c echo.Context) error {
-	isTrusted, err := iputil.IsTrusted(iputil.IPFromRequest(c.Request()), h.trustedSubnet)
+	ip := iputil.IPFromRequest(c.Request())
+	statsOutDTO, err := h.useCase.Stats(c.Request().Context(), ip)
 	if err != nil {
-		c.Response().WriteHeader(http.StatusInternalServerError)
-		return err
-	}
-	if !isTrusted {
-		c.Response().WriteHeader(http.StatusForbidden)
-		return nil
-	}
+		if errors.Is(err, stats.ErrNotTrustedIP) {
+			c.Response().WriteHeader(http.StatusForbidden)
+			return nil
+		}
 
-	stats, err := h.repo.Stats(c.Request().Context())
-	if err != nil {
 		c.Response().WriteHeader(http.StatusInternalServerError)
 		return err
 	}
@@ -46,8 +42,8 @@ func (h *Handler) Handle(c echo.Context) error {
 		Urls  int `json:"urls"`
 		Users int `json:"users"`
 	}{
-		Urls:  stats.UrlsCount,
-		Users: stats.UsersCount,
+		Urls:  statsOutDTO.Urls,
+		Users: statsOutDTO.Users,
 	}
 
 	c.Response().Header().Set("Content-Type", "application/json")

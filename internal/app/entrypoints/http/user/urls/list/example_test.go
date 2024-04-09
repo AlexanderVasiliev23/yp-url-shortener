@@ -2,7 +2,7 @@ package list
 
 import (
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/user/url/list"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
@@ -10,15 +10,17 @@ import (
 
 // Example демонстрация работы обработчика получения токенов и соответствущих ссылок, принадлежащих запрашивающему пользователю
 func Example() {
-	handler := NewHandler(
-		storageMock{result: []*models.ShortLink{
-			{
-				Token:    defaultToken,
-				Original: defaultOriginal,
+	handler := NewHandler(&useCaseMock{
+		outDTO: &list.OutDTO{
+			Items: []list.OutDTOItem{
+				{
+					ShortURL:    "https://my_url_shortener/test_token",
+					OriginalURL: "test_original",
+				},
 			},
-		}},
-		&userContextFetcherMock{userID: defaultUserID},
-		defaultAddr).List
+		},
+		err: nil,
+	}).List
 
 	r := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 	w := httptest.NewRecorder()

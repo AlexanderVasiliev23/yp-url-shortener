@@ -2,47 +2,48 @@ package get
 
 import (
 	"context"
+	"errors"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/get"
 	"net/http"
-
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 
 	"github.com/labstack/echo/v4"
 )
 
-type repository interface {
-	Get(ctx context.Context, token string) (*models.ShortLink, error)
+type useCase interface {
+	Get(ctx context.Context, token string) (originalURL string, err error)
 }
 
 // Handler missing godoc.
 type Handler struct {
-	repository repository
+	useCase useCase
 }
 
-// NewHandler missing godoc.
-func NewHandler(repository repository) *Handler {
-	return &Handler{repository: repository}
+func NewHandler(useCase useCase) *Handler {
+	return &Handler{useCase: useCase}
 }
 
 // Get missing godoc.
 func (h *Handler) Get(c echo.Context) error {
 	token := c.Param("token")
 
-	if token == "" {
-		c.Response().WriteHeader(http.StatusBadRequest)
-		return nil
-	}
+	originalURL, err := h.useCase.Get(context.Background(), token)
 
-	shortLink, err := h.repository.Get(c.Request().Context(), token)
 	if err != nil {
-		c.Response().WriteHeader(http.StatusBadRequest)
-		return nil
-	}
-	if shortLink.DeletedAt != nil {
-		c.Response().WriteHeader(http.StatusGone)
-		return nil
+		if errors.Is(err, get.ErrTokenIsEmpty) {
+			c.Response().WriteHeader(http.StatusBadRequest)
+			return err
+		}
+
+		if errors.Is(err, get.ErrTokenIsDeleted) {
+			c.Response().WriteHeader(http.StatusGone)
+			return err
+		}
+
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
 	}
 
-	c.Response().Header().Set("Location", shortLink.Original)
+	c.Response().Header().Set("Location", originalURL)
 	c.Response().WriteHeader(http.StatusTemporaryRedirect)
 
 	return nil

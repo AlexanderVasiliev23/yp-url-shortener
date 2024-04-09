@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/user/url/list"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/models"
 )
 
 const (
@@ -25,22 +24,13 @@ var (
 	ErrDefault = errors.New("test_error")
 )
 
-type userContextFetcherMock struct {
+type useCaseMock struct {
+	outDTO *list.OutDTO
 	err    error
-	userID int
 }
 
-func (f userContextFetcherMock) GetUserIDFromContext(ctx context.Context) (int, error) {
-	return f.userID, f.err
-}
-
-type storageMock struct {
-	err    error
-	result []*models.ShortLink
-}
-
-func (s storageMock) FindByUserID(ctx context.Context, userID int) ([]*models.ShortLink, error) {
-	return s.result, s.err
+func (m *useCaseMock) List(ctx context.Context) (*list.OutDTO, error) {
+	return m.outDTO, m.err
 }
 
 func TestUrls(t *testing.T) {
@@ -51,18 +41,15 @@ func TestUrls(t *testing.T) {
 	}
 
 	testCases := []struct {
-		userContextFetcherMock *userContextFetcherMock
-		name                   string
-		storage                storageMock
-		want                   want
+		name string
+		useCase
+		want want
 	}{
 		{
 			name: "empty list",
-			userContextFetcherMock: &userContextFetcherMock{
-				userID: defaultUserID,
-			},
-			storage: storageMock{
-				result: make([]*models.ShortLink, 0),
+			useCase: &useCaseMock{
+				outDTO: nil,
+				err:    list.ErrNoSavedURLs,
 			},
 			want: want{
 				code: http.StatusNoContent,
@@ -70,16 +57,16 @@ func TestUrls(t *testing.T) {
 		},
 		{
 			name: "success list",
-			userContextFetcherMock: &userContextFetcherMock{
-				userID: defaultUserID,
-			},
-			storage: storageMock{
-				result: []*models.ShortLink{
-					{
-						Token:    defaultToken,
-						Original: defaultOriginal,
+			useCase: &useCaseMock{
+				outDTO: &list.OutDTO{
+					Items: []list.OutDTOItem{
+						{
+							ShortURL:    fmt.Sprintf("%s/%s", defaultAddr, defaultToken),
+							OriginalURL: defaultOriginal,
+						},
 					},
 				},
+				err: nil,
 			},
 			want: want{
 				code: http.StatusOK,
@@ -87,25 +74,24 @@ func TestUrls(t *testing.T) {
 			},
 		},
 		{
-			name: "storage error",
-			userContextFetcherMock: &userContextFetcherMock{
-				userID: defaultUserID,
-			},
-			storage: storageMock{
-				err: ErrDefault,
-			},
-			want: want{
-				code: http.StatusInternalServerError,
-				err:  ErrDefault,
-			},
-		},
-		{
 			name: "unauthorized",
-			userContextFetcherMock: &userContextFetcherMock{
-				err: ErrDefault,
+			useCase: &useCaseMock{
+				outDTO: nil,
+				err:    list.ErrUnauthorized,
 			},
 			want: want{
 				code: http.StatusUnauthorized,
+				err:  list.ErrUnauthorized,
+			},
+		},
+		{
+			name: "usecase unknown error",
+			useCase: &useCaseMock{
+				outDTO: nil,
+				err:    ErrDefault,
+			},
+			want: want{
+				code: http.StatusInternalServerError,
 				err:  ErrDefault,
 			},
 		},
@@ -116,7 +102,7 @@ func TestUrls(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
 
-			h := NewHandler(tc.storage, tc.userContextFetcherMock, defaultAddr).List
+			h := NewHandler(tc.useCase).List
 
 			e := echo.New()
 			c := e.NewContext(request, recorder)

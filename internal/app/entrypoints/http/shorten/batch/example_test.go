@@ -2,8 +2,7 @@ package batch
 
 import (
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/auth/mock"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/uuidgenerator/google"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/batch"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
@@ -12,21 +11,20 @@ import (
 
 // Example демонстрация работы обработчика сохранения ссылки и получения токена для нее
 func Example() {
-	_tokenGenerator := func() tokenGenerator {
-		tokens := []string{token1, token2}
-		tokensChan := make(chan string, len(tokens))
-		for _, token := range tokens {
-			tokensChan <- token
-		}
-		return tokenGeneratorMock{tokensSeq: tokensChan}
-	}()
-
-	handler := NewShortener(
-		batchSaverMock{},
-		_tokenGenerator,
-		google.UUIDGenerator{},
-		&mock.UserContextFetcherMock{},
-		addr).Handle
+	handler := NewShortener(&useCaseMock{
+		out: &batch.OutDTO{
+			Items: []batch.OutDTOItem{
+				{
+					CorrelationID: correlationID1,
+					ShortURL:      fmt.Sprintf("%s/%s", addr, token1),
+				},
+				{
+					CorrelationID: correlationID2,
+					ShortURL:      fmt.Sprintf("%s/%s", addr, token2),
+				},
+			},
+		},
+	}).Handle
 
 	req := fmt.Sprintf(`
 		[
