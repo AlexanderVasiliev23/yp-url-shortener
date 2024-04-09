@@ -1,10 +1,11 @@
-package add
+package grpc
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/add"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/batch"
 	url_shortener "github.com/AlexanderVasiliev23/yp-url-shortener/proto/gen/proto"
 	"net/http"
 	"testing"
@@ -21,12 +22,30 @@ var (
 	errDefault = errors.New("test_error")
 )
 
-type mockUseCase struct {
+type mockAddUseCase struct {
 	err      error
 	shortURL string
 }
 
-func (m *mockUseCase) Add(ctx context.Context, originalURL string) (shortenURL string, err error) {
+func (m *mockAddUseCase) Add(ctx context.Context, originalURL string) (shortenURL string, err error) {
+	return m.shortURL, m.err
+}
+
+type mockBatchUseCase struct {
+	err    error
+	outDTO *batch.OutDTO
+}
+
+func (m *mockBatchUseCase) Shorten(ctx context.Context, in batch.InDTO) (*batch.OutDTO, error) {
+	return m.outDTO, m.err
+}
+
+type mockSingleUseCase struct {
+	err      error
+	shortURL string
+}
+
+func (m *mockSingleUseCase) Shorten(ctx context.Context, originalURL string) (shortURL string, err error) {
 	return m.shortURL, m.err
 }
 
@@ -36,13 +55,13 @@ func TestAdd(t *testing.T) {
 		method      string
 		originalURL string
 		want        *url_shortener.AddResponse
-		useCase     useCase
+		useCase     addUseCase
 	}{
 		{
 			name:        "success",
 			method:      http.MethodPost,
 			originalURL: "test_url",
-			useCase: &mockUseCase{
+			useCase: &mockAddUseCase{
 				err:      nil,
 				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
@@ -55,7 +74,7 @@ func TestAdd(t *testing.T) {
 			name:        "empty body",
 			method:      http.MethodPost,
 			originalURL: "",
-			useCase: &mockUseCase{
+			useCase: &mockAddUseCase{
 				err:      add.ErrOriginalURLIsEmpty,
 				shortURL: "",
 			},
@@ -68,7 +87,7 @@ func TestAdd(t *testing.T) {
 			name:        "usecase error",
 			method:      http.MethodPost,
 			originalURL: "test_url",
-			useCase: &mockUseCase{
+			useCase: &mockAddUseCase{
 				err:      errDefault,
 				shortURL: "",
 			},
@@ -81,7 +100,7 @@ func TestAdd(t *testing.T) {
 			name:        "already exists",
 			method:      http.MethodPost,
 			originalURL: "test_url",
-			useCase: &mockUseCase{
+			useCase: &mockAddUseCase{
 				err:      add.ErrOriginURLAlreadyExists,
 				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
@@ -93,7 +112,7 @@ func TestAdd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := NewServer(tt.useCase)
+			server := NewServer(tt.useCase, &mockBatchUseCase{}, &mockSingleUseCase{})
 
 			resp, err := server.Add(context.Background(), &url_shortener.AddRequest{
 				OriginalURL: tt.originalURL,
