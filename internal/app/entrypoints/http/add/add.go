@@ -40,7 +40,7 @@ func (h *Handler) Add(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, add.ErrOriginURLAlreadyExists) {
 			c.Response().WriteHeader(http.StatusConflict)
-			_, _ = fmt.Fprintf(c.Response(), shortURL)
+			_, _ = fmt.Fprint(c.Response(), shortURL)
 			return nil
 		}
 
@@ -54,7 +54,7 @@ func (h *Handler) Add(c echo.Context) error {
 	}
 
 	c.Response().WriteHeader(http.StatusCreated)
-	_, _ = fmt.Fprintf(c.Response(), shortURL)
+	_, _ = fmt.Fprint(c.Response(), shortURL)
 
 	return nil
 }
