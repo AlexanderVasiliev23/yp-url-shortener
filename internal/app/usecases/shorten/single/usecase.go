@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	ErrInvalidJSON      = errors.New("invalid json")
 	ErrEmptyOriginalURL = errors.New("empty original url")
 	ErrAlreadyExists    = errors.New("already exists")
 )

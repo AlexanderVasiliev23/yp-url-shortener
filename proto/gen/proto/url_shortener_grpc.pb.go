@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UrlShortener_Add_FullMethodName = "/pb.UrlShortener/Add"
+	UrlShortener_Add_FullMethodName          = "/pb.UrlShortener/Add"
+	UrlShortener_CreateBatch_FullMethodName  = "/pb.UrlShortener/CreateBatch"
+	UrlShortener_CreateSingle_FullMethodName = "/pb.UrlShortener/CreateSingle"
 )
 
 // UrlShortenerClient is the client API for UrlShortener service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UrlShortenerClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
+	CreateBatch(ctx context.Context, in *CreateBatchRequest, opts ...grpc.CallOption) (*CreateBatchResponse, error)
+	CreateSingle(ctx context.Context, in *CreateSingleRequest, opts ...grpc.CallOption) (*CreateSingleResponse, error)
 }
 
 type urlShortenerClient struct {
@@ -46,11 +50,31 @@ func (c *urlShortenerClient) Add(ctx context.Context, in *AddRequest, opts ...gr
 	return out, nil
 }
 
+func (c *urlShortenerClient) CreateBatch(ctx context.Context, in *CreateBatchRequest, opts ...grpc.CallOption) (*CreateBatchResponse, error) {
+	out := new(CreateBatchResponse)
+	err := c.cc.Invoke(ctx, UrlShortener_CreateBatch_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *urlShortenerClient) CreateSingle(ctx context.Context, in *CreateSingleRequest, opts ...grpc.CallOption) (*CreateSingleResponse, error) {
+	out := new(CreateSingleResponse)
+	err := c.cc.Invoke(ctx, UrlShortener_CreateSingle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UrlShortenerServer is the server API for UrlShortener service.
 // All implementations must embed UnimplementedUrlShortenerServer
 // for forward compatibility
 type UrlShortenerServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
+	CreateBatch(context.Context, *CreateBatchRequest) (*CreateBatchResponse, error)
+	CreateSingle(context.Context, *CreateSingleRequest) (*CreateSingleResponse, error)
 	mustEmbedUnimplementedUrlShortenerServer()
 }
 
@@ -60,6 +84,12 @@ type UnimplementedUrlShortenerServer struct {
 
 func (UnimplementedUrlShortenerServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedUrlShortenerServer) CreateBatch(context.Context, *CreateBatchRequest) (*CreateBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBatch not implemented")
+}
+func (UnimplementedUrlShortenerServer) CreateSingle(context.Context, *CreateSingleRequest) (*CreateSingleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSingle not implemented")
 }
 func (UnimplementedUrlShortenerServer) mustEmbedUnimplementedUrlShortenerServer() {}
 
@@ -92,6 +122,42 @@ func _UrlShortener_Add_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UrlShortener_CreateBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UrlShortenerServer).CreateBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UrlShortener_CreateBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UrlShortenerServer).CreateBatch(ctx, req.(*CreateBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UrlShortener_CreateSingle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSingleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UrlShortenerServer).CreateSingle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UrlShortener_CreateSingle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UrlShortenerServer).CreateSingle(ctx, req.(*CreateSingleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UrlShortener_ServiceDesc is the grpc.ServiceDesc for UrlShortener service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +168,14 @@ var UrlShortener_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Add",
 			Handler:    _UrlShortener_Add_Handler,
+		},
+		{
+			MethodName: "CreateBatch",
+			Handler:    _UrlShortener_CreateBatch_Handler,
+		},
+		{
+			MethodName: "CreateSingle",
+			Handler:    _UrlShortener_CreateSingle_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

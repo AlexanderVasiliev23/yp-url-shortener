@@ -10,7 +10,7 @@ import (
 )
 
 type useCase interface {
-	Shorten(ctx context.Context, jsonString string) (shortURL string, err error)
+	Shorten(ctx context.Context, originalURL string) (shortURL string, err error)
 }
 
 // Shortener missing godoc.
@@ -43,7 +43,7 @@ func (h *Shortener) Handle(c echo.Context) error {
 	}
 
 	if err != nil {
-		if errors.Is(err, single.ErrInvalidJSON) || errors.Is(err, single.ErrEmptyOriginalURL) {
+		if errors.Is(err, single.ErrEmptyOriginalURL) {
 			c.Response().WriteHeader(http.StatusBadRequest)
 			return err
 		}

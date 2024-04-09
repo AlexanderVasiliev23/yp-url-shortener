@@ -3,10 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc/add"
+	grpc2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc/interceptors/jwt"
 	loggerinterceptor "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/entrypoints/grpc/interceptors/logger"
-	add2 "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/add"
+	add_usecase "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/add"
+	batch_usecase "github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/batch"
+	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/usecases/shorten/single"
 	"github.com/AlexanderVasiliev23/yp-url-shortener/internal/app/util/tls"
 	urlshortener "github.com/AlexanderVasiliev23/yp-url-shortener/proto/gen/proto"
 	"google.golang.org/grpc"
@@ -138,10 +140,13 @@ func (a *App) RunGRPCServer() error {
 		),
 	)
 
-	addUseCase := add2.NewUseCase(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress)
-	addServer := add.NewServer(addUseCase)
+	server := grpc2.NewServer(
+		add_usecase.NewUseCase(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress),
+		batch_usecase.NewUseCase(a.storage, a.tokenGenerator, a.uuidGenerator, a.userContextFetcher, a.conf.BaseAddress),
+		single.NewUseCase(a.storage, a.tokenGenerator, a.userContextFetcher, a.conf.BaseAddress),
+	)
 
-	urlshortener.RegisterUrlShortenerServer(s, addServer)
+	urlshortener.RegisterUrlShortenerServer(s, server)
 
 	lis, err := net.Listen("tcp", a.conf.GRPCServerAddr)
 	if err != nil {
