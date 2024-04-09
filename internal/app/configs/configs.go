@@ -42,11 +42,6 @@ type DeleteWorkerConfig struct {
 func MustConfigure() *Config {
 	conf := &Config{}
 
-	// todo config env
-	// todo config file
-	// todo config flag
-	conf.GRPCServerAddr = "localhost:8001"
-
 	flag.StringVar(&conf.Addr, "a", ":8080", "server address")
 	flag.StringVar(&conf.BaseAddress, "b", "http://localhost:8080", "base address for short url")
 	flag.IntVar(&conf.TokenLen, "token-len", defaultTokenLen, "length of a token")
@@ -55,6 +50,7 @@ func MustConfigure() *Config {
 	flag.StringVar(&conf.DatabaseDSN, "d", "", "db data source name")
 	flag.BoolVar(&conf.EnableHTTPS, "s", false, "enable HTTPS")
 	flag.StringVar(&conf.TrustedSubnet, "t", "", "trusted subnet")
+	flag.StringVar(&conf.GRPCServerAddr, "grpc-server-addr", "", "GRPC server address")
 
 	var configFilePath string
 	flag.StringVar(&configFilePath, "c", "", "path to config JSON file")
@@ -83,6 +79,10 @@ func MustConfigure() *Config {
 
 	if trustedSubnet, set := os.LookupEnv("TRUSTED_SUBNET"); set {
 		conf.TrustedSubnet = trustedSubnet
+	}
+
+	if grpcServerAddress, set := os.LookupEnv("GRPC_SERVER_ADDRESS"); set {
+		conf.GRPCServerAddr = grpcServerAddress
 	}
 
 	conf.JWTSecretKey = defaultJWTSecretKey
@@ -119,6 +119,7 @@ func MustConfigure() *Config {
 
 		configFromFile := struct {
 			ServerAddress         string `json:"server_address"`
+			GRPCServerAddress     string `json:"grpc_server_address"`
 			BaseURL               string `json:"base_url"`
 			FileStoragePath       string `json:"file_storage_path"`
 			DatabaseDSN           string `json:"database_dsn"`
@@ -158,6 +159,10 @@ func MustConfigure() *Config {
 
 		if configFromFile.TrustedSubnet != "" {
 			conf.TrustedSubnet = configFromFile.TrustedSubnet
+		}
+
+		if configFromFile.GRPCServerAddress != "" {
+			conf.GRPCServerAddr = configFromFile.GRPCServerAddress
 		}
 
 		conf.EnableHTTPS = configFromFile.EnableHTTPS

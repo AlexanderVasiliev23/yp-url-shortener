@@ -35,7 +35,7 @@ func TestAdd(t *testing.T) {
 		name        string
 		method      string
 		originalURL string
-		want        url_shortener.AddResponse
+		want        *url_shortener.AddResponse
 		useCase     useCase
 	}{
 		{
@@ -46,7 +46,7 @@ func TestAdd(t *testing.T) {
 				err:      nil,
 				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
-			want: url_shortener.AddResponse{
+			want: &url_shortener.AddResponse{
 				ShortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 				Error:    "",
 			},
@@ -59,7 +59,7 @@ func TestAdd(t *testing.T) {
 				err:      add.ErrOriginalURLIsEmpty,
 				shortURL: "",
 			},
-			want: url_shortener.AddResponse{
+			want: &url_shortener.AddResponse{
 				ShortURL: "",
 				Error:    add.ErrOriginalURLIsEmpty.Error(),
 			},
@@ -72,7 +72,7 @@ func TestAdd(t *testing.T) {
 				err:      errDefault,
 				shortURL: "",
 			},
-			want: url_shortener.AddResponse{
+			want: &url_shortener.AddResponse{
 				ShortURL: "",
 				Error:    "unknown error",
 			},
@@ -85,7 +85,7 @@ func TestAdd(t *testing.T) {
 				err:      add.ErrOriginURLAlreadyExists,
 				shortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 			},
-			want: url_shortener.AddResponse{
+			want: &url_shortener.AddResponse{
 				ShortURL: fmt.Sprintf("%s/%s", addr, defaultToken),
 				Error:    add.ErrOriginURLAlreadyExists.Error(),
 			},
@@ -99,7 +99,7 @@ func TestAdd(t *testing.T) {
 				OriginalURL: tt.originalURL,
 			})
 			assert.NoError(t, err)
-			assert.Equal(t, tt.want, *resp)
+			assert.Equal(t, tt.want, resp)
 		})
 	}
 }

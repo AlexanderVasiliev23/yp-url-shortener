@@ -41,7 +41,7 @@ func UnaryInterceptor(jwtSecretKey string) grpc.UnaryServerInterceptor {
 			}
 		}
 
-		userID, err := userIdFromToken(token, jwtSecretKey)
+		userID, err := userIDFromToken(token, jwtSecretKey)
 		if err != nil {
 			if errors.Is(err, errUserIDNotSet) {
 				return nil, status.Errorf(codes.Unauthenticated, errUserIDNotSet.Error())
@@ -60,7 +60,7 @@ func UnaryInterceptor(jwtSecretKey string) grpc.UnaryServerInterceptor {
 	}
 }
 
-func userIdFromToken(rawToken string, jwtSecretKey string) (int, error) {
+func userIDFromToken(rawToken string, jwtSecretKey string) (int, error) {
 	claims := &Claims{}
 
 	token, err := jwt.ParseWithClaims(rawToken, claims, func(token *jwt.Token) (interface{}, error) {
