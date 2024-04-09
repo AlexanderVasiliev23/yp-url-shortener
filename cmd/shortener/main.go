@@ -41,7 +41,8 @@ func main() {
 
 	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(application.RunWorkers)
-	g.Go(application.Run)
+	g.Go(application.RunHTTPServer)
+	g.Go(application.RunGRPCServer)
 	g.Go(profiler)
 
 	select {
